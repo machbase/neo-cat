@@ -1,0 +1,12 @@
+start: ./.backend/start.sh
+stop: ./.backend/stop.sh
+
+auto_start: true
+
+env:
+  - FOO=BAR
+
+env_file: ../storage/env.txt
+
+stdout_log: debug
+stderr_log: warn
