@@ -4,7 +4,8 @@ stop: ./.backend/stop.sh
 auto_start: true
 
 env:
-  - FOO=BAR
+  - INTERVAL=10s
+  - TABLE_NAME=example
 
 env_file: ../storage/env.txt
 
