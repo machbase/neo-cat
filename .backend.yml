@@ -1,7 +1,7 @@
 start: ./.backend/start.sh
 stop: ./.backend/stop.sh
 
-auto_start: true
+auto_start: false
 
 env:
   - INTERVAL=10s
