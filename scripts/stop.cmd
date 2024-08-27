@@ -1,0 +1,1 @@
+taskkill /F /FI "PID eq $(type .\.backend\pid)"

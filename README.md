@@ -10,7 +10,7 @@ cd frontend && \
 npm run build && \
 cd .. && \
 go build -o ./frontend/build/.backend/neo-cat . && \
+cp scripts/* ./frontend/build/.backend && \
 cp .backend.yml ./frontend/build && \
-cp start.sh stop.sh ./frontend/build/.backend && \
 tar zcf ../neo-cat-package.tgz ./frontend/build
 ```
