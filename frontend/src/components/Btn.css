@@ -1,0 +1,39 @@
+.btn-wrap,
+.btn-wrap-none-hover {
+    padding: 0 8px;
+
+    button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 60px;
+        height: 25px;
+        color: #f1f1f1;
+        border-radius: 2px;
+        font-size: 13px;
+        padding: 4px;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        padding: 0 8px;
+        border: 1px inset solid transparent;
+
+        .loader {
+            margin-right: 4px;
+        }
+
+        span {
+            cursor: inherit;
+        }
+
+        &:hover:enabled {
+            border: 1px solid #f1f1f1;
+        }
+    }
+}
+
+.btn-wrap-none-hover {
+    cursor: not-allowed;
+    button {
+        cursor: inherit;
+    }
+}
