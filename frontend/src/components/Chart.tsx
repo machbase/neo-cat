@@ -7,11 +7,9 @@ import { useTimeout } from 'src/hooks/useTimeout';
 
 const CHART_DEFAULT_W = 400;
 const CHART_DEFAULT_H = 300;
-const date = new Date().getTime();
 
-export const Chart = ({ config, appChartRef }: { config: { INTERVAL: string; TABLE_NAME: string }; appChartRef: React.RefObject<HTMLInputElement> }) => {
+export const Chart = ({ config, appChartRef, chartId }: { config: { INTERVAL: string; TABLE_NAME: string }; chartId: string; appChartRef: React.RefObject<HTMLInputElement> }) => {
     const chartRef = useRef<HTMLDivElement>(null);
-    const [sChartScript, setChartScript] = useState<any>(undefined);
     const [sIsLoading, setIsLoading] = useState<boolean>(false);
 
     const createChart = async () => {
@@ -19,11 +17,10 @@ export const Chart = ({ config, appChartRef }: { config: { INTERVAL: string; TAB
         const chartStructure: string = tqlChartHelper({
             envConf: config,
             size: { w: appChartRef?.current?.clientWidth ?? CHART_DEFAULT_W, h: appChartRef?.current?.clientHeight ?? CHART_DEFAULT_H },
-            chartID: `neo-cat-chart-${date}`,
+            chartID: `neo-cat-chart-${chartId}`,
         });
         const chartRes = await getTqlChart(chartStructure);
         setIsLoading(false);
-        setChartScript(chartRes?.data);
         LoadScript(chartRes?.data);
     };
     const LoadScript = async (chartData: any) => {
@@ -32,8 +29,8 @@ export const Chart = ({ config, appChartRef }: { config: { INTERVAL: string; TAB
         const ChartDiv = document.createElement('div');
         if (chartRef.current?.firstElementChild?.id !== chartData?.chartID) {
             ChartDiv.id = chartData?.chartID;
-            ChartDiv.style.width = chartData.style.width;
-            ChartDiv.style.height = chartData.style.height;
+            ChartDiv.style.width = chartData.style?.width ?? CHART_DEFAULT_W;
+            ChartDiv.style.height = chartData.style?.height ?? CHART_DEFAULT_H;
             ChartDiv.style.margin = 'auto'; // auto | initial
             ChartDiv.style.backgroundColor = 'dark';
             chartRef.current?.appendChild(ChartDiv);
@@ -49,10 +46,10 @@ export const Chart = ({ config, appChartRef }: { config: { INTERVAL: string; TAB
 
     useEffect(() => {
         createChart();
-    }, []);
+    }, [chartId]);
     useTimeout(() => {
         !sIsLoading && createChart();
     }, Number(config.INTERVAL.replace('s', '')) * 1000 * 10);
 
-    return <div className='chart-wrap'>{sChartScript && <div className='chart_container' ref={chartRef} />}</div>;
+    return <div className='chart-wrap'>{<div className='chart_container' ref={chartRef} />}</div>;
 };

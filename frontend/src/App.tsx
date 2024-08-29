@@ -13,6 +13,7 @@ const App = () => {
     const [sEnvStatus, setEnvStatus] = useState<boolean>(false);
     const [sPkgStatus, setPkgStatus] = useState<string | undefined>(undefined);
     const [sPayload, setPayload] = useState<{ INTERVAL: string; TABLE_NAME: string } | undefined>(undefined);
+    const [sChartId, setChartId] = useState<string>('');
     const isAdmin = getUserName() ? getUserName().toUpperCase() === ADMIN.toUpperCase() : false;
     const INTERVALLIST: { key: string; value: string }[] = [
         { key: '1s', value: '1' },
@@ -47,8 +48,14 @@ const App = () => {
     };
     const fetchPkgEnv = async () => {
         const envRes: any = await getPkgEnv();
-        if (envRes?.INTERVAL && envRes?.TABLE_NAME) {
-            setPayload(envRes);
+        if (String(envRes)) {
+            const env: { INTERVAL: string; TABLE_NAME: string } = { INTERVAL: '', TABLE_NAME: '' };
+            envRes.split('\n').map((item: string) => {
+                const tmp = item.split('=');
+                env[tmp[0]] = tmp[1];
+                return;
+            });
+            setPayload(env);
             setEnvStatus(true);
             !sEnvStatus && sendPkgAction('status');
         } else {
@@ -59,15 +66,23 @@ const App = () => {
     // getPkgAction
     const sendPkgAction = async (action: PKG_ACTION) => {
         if (action !== 'status' && !isAdmin) return;
+        if (action === 'start') setChartUID();
         const actionRes: any = await getPkgAction(action);
         if (actionRes && actionRes?.success && actionRes?.data) setPkgStatus(actionRes?.data?.status);
-        else setPkgStatus(undefined);
+        else {
+            setEnvStatus(false);
+            setPkgStatus(undefined);
+        }
+    };
+    const setChartUID = () => {
+        const chartID = new Date().getTime();
+        setChartId(chartID.toString());
     };
     const initApp = async () => {
+        setChartUID();
         const checkRes: any = await checkToken();
         checkRes && checkRes?.success && fetchPkgEnv();
     };
-
     useEffect(() => {
         initApp();
     }, []);
@@ -85,13 +100,13 @@ const App = () => {
                             {sPayload && <Inp label='To Table' callback={handleInp} initVal={sPayload.TABLE_NAME} />}
                             {sPayload && <Dropdown txt='Interval' list={INTERVALLIST} callback={handleDropdown} initVal={sPayload.INTERVAL} />}
                             <div className='btn-group'>
-                                <Btn txt='Save' type='COPY' disable={sPkgStatus === PKG_RUNNING} callback={() => handleAction('save')} />
+                                <Btn txt='Save' type='CREATE' disable={sPkgStatus === PKG_RUNNING} callback={() => handleAction('save')} />
                             </div>
                         </div>
                     </div>
                     <span>now-30m ~ now</span>
                     <div ref={chartRef} className='app-chart'>
-                        {sPayload && sEnvStatus && <Chart config={sPayload} appChartRef={chartRef} />}
+                        {sPayload && sEnvStatus && sPkgStatus === PKG_RUNNING && <Chart config={sPayload} appChartRef={chartRef} chartId={sChartId} />}
                     </div>
                 </>
             ) : (

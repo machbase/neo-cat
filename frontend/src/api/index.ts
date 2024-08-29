@@ -1,5 +1,4 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
-import { PKG_NAME } from 'src/utils/constants';
 import { tokenRefresh } from './api';
 
 // Create an axios instance
@@ -20,12 +19,14 @@ interface CustomHeaders {
 request.interceptors.request.use(
     (config: any) => {
         const sHeaders = config.headers as CustomHeaders;
-        const envWrite = config.url.match(/\/api\/pkgs\/storage$/gm);
+        const envConfig = config.url.match(/^\/api\/pkgs\/storage/gm);
         const drawChart = config.url.match(/\/api\/tql$/gm);
         const methodPOST = (config?.method as string).toUpperCase() === 'post'.toUpperCase();
         const accessToken = localStorage.getItem('accessToken');
 
-        if ((drawChart || envWrite) && methodPOST) sHeaders['Content-Type'] = 'text/plain';
+        if ((drawChart || envConfig) && methodPOST) {
+            sHeaders['Content-Type'] = 'text/plain';
+        }
         sHeaders.Authorization = `Bearer ${accessToken}`;
         return config;
     },

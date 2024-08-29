@@ -28,10 +28,15 @@ export const getPkgEnv = () => {
  * @content string
  */
 export const setPkgEnv = (content: { INTERVAL: string; TABLE_NAME: string }) => {
+    let data = Object.entries(content)
+        .map(([key, value]) => {
+            return `${key}=${value}`;
+        })
+        .join('\n');
     return request({
         method: 'POST',
         url: `/api/pkgs/storage/${PKG_NAME}/${ENV_FILE}`,
-        data: content,
+        data: data,
     });
 };
 
