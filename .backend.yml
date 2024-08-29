@@ -18,7 +18,5 @@ env:
   - INTERVAL=10s
   - TABLE_NAME=example
 
-env_file: ../storage/env.txt
-
 stdout_log: debug
 stderr_log: warn
