@@ -1,7 +1,14 @@
 # neo-cat
 
-machbase-neo watch-*cat*, better than *watch-dog*.
+machbase-neo's *watch-cat*, rather than *watch-dog*.
 
+![logo](./docs/images/neocatx256.png)
+
+**Features & Todo**
+- [x] System load
+- [ ] CPU
+- [ ] Memory
+- [ ] Disk Usage
 
 ## Build
 
