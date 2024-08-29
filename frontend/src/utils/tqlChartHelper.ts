@@ -20,6 +20,7 @@ export const tqlChartHelper = ({ envConf, size, chartID }: { envConf: { INTERVAL
         }
     ),
     chartJSCode({
+		if (!_column_0 || !_column_1) return;
         const defaultSeriesOpt = {type: 'line', connectNulls: true};
         const tagNameList = Array.from( new Set(_column_0));
         const seriesList = tagNameList.map((tagName) => {return { ...defaultSeriesOpt, name: tagName + '', data: []}});

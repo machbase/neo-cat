@@ -5,12 +5,15 @@ import { Chart } from './components/Chart.tsx';
 import { Dropdown } from './components/Dropdown.tsx';
 import { Inp } from './components/Inp.tsx';
 import { checkToken, getPkgAction, getPkgEnv, PKG_ACTION, setPkgEnv } from './api/api.ts';
+import { getUserName } from './utils/getUserName.ts';
+import { ADMIN } from './utils/constants.ts';
 
 const App = () => {
     const chartRef = useRef<HTMLInputElement>(null);
     const [sEnvStatus, setEnvStatus] = useState<boolean>(false);
     const [sPkgStatus, setPkgStatus] = useState<string | undefined>(undefined);
     const [sPayload, setPayload] = useState<{ INTERVAL: string; TABLE_NAME: string } | undefined>(undefined);
+    const isAdmin = getUserName() ? getUserName().toUpperCase() === ADMIN.toUpperCase() : false;
     const INTERVALLIST: { key: string; value: string }[] = [
         { key: '1s', value: '1' },
         { key: '5s', value: '5' },
@@ -38,10 +41,9 @@ const App = () => {
         updatePayload('INTERVAL', item.key);
     };
     const savePkgEnv = async () => {
-        // SYS
+        if (!isAdmin) return;
         const saveRes: any = await setPkgEnv(sPayload);
         if (saveRes?.success) fetchPkgEnv();
-        // else ERROR TOAST
     };
     const fetchPkgEnv = async () => {
         const envRes: any = await getPkgEnv();
@@ -56,6 +58,7 @@ const App = () => {
     };
     // getPkgAction
     const sendPkgAction = async (action: PKG_ACTION) => {
+        if (action !== 'status' && !isAdmin) return;
         const actionRes: any = await getPkgAction(action);
         if (actionRes && actionRes?.success && actionRes?.data) setPkgStatus(actionRes?.data?.status);
         else setPkgStatus(undefined);
@@ -71,22 +74,40 @@ const App = () => {
 
     return (
         <div className='App'>
-            <div className='app-body'>
-                <div className='app-action'>
-                    <Btn txt='Start' type='CREATE' disable={!sEnvStatus || sPkgStatus === PKG_RUNNING} callback={() => handleAction('start')} />
-                    <Btn txt='Stop' type='DELETE' disable={!sEnvStatus || sPkgStatus === PKG_STOPPED} callback={() => handleAction('stop')} />
-                </div>
-                <div className='app-config'>
-                    {sPayload && <Inp label='To Table' callback={handleInp} initVal={sPayload.TABLE_NAME} />}
-                    {sPayload && <Dropdown txt='Interval' list={INTERVALLIST} callback={handleDropdown} initVal={sPayload.INTERVAL} />}
-                    <div className='btn-group'>
-                        <Btn txt='Save' type='COPY' disable={sPkgStatus === PKG_RUNNING} callback={() => handleAction('save')} />
+            {isAdmin ? (
+                <>
+                    <div className='app-body'>
+                        <div className='app-action'>
+                            <Btn txt='Start' type='CREATE' disable={!sEnvStatus || sPkgStatus === PKG_RUNNING} callback={() => handleAction('start')} />
+                            <Btn txt='Stop' type='DELETE' disable={!sEnvStatus || sPkgStatus === PKG_STOPPED} callback={() => handleAction('stop')} />
+                        </div>
+                        <div className='app-config'>
+                            {sPayload && <Inp label='To Table' callback={handleInp} initVal={sPayload.TABLE_NAME} />}
+                            {sPayload && <Dropdown txt='Interval' list={INTERVALLIST} callback={handleDropdown} initVal={sPayload.INTERVAL} />}
+                            <div className='btn-group'>
+                                <Btn txt='Save' type='COPY' disable={sPkgStatus === PKG_RUNNING} callback={() => handleAction('save')} />
+                            </div>
+                        </div>
+                    </div>
+                    <span>now-30m ~ now</span>
+                    <div ref={chartRef} className='app-chart'>
+                        {sPayload && sEnvStatus && <Chart config={sPayload} appChartRef={chartRef} />}
+                    </div>
+                </>
+            ) : (
+                <div className='app-body'>
+                    <div className='app-config'>
+                        {sPayload ? (
+                            <>
+                                <Inp label='To Table' disable={true} initVal={sPayload.TABLE_NAME} />
+                                <Dropdown txt='Interval' disable={true} initVal={sPayload.INTERVAL} />
+                            </>
+                        ) : (
+                            <span>Neo cat 🐈</span>
+                        )}
                     </div>
                 </div>
-            </div>
-            <div ref={chartRef} className='app-chart'>
-                {sPayload && sEnvStatus && <Chart config={sPayload} appChartRef={chartRef} />}
-            </div>
+            )}
         </div>
     );
 };

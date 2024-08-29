@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { PKG_NAME } from 'src/utils/constants';
+import { tokenRefresh } from './api';
 
 // Create an axios instance
 const baseURL = '/web';
@@ -58,8 +59,20 @@ request.interceptors.response.use(
         let sData;
         if (error.response && error.response.status === 401) {
             if (error.response.config.url !== `/api/relogin`) {
-                localStorage.setItem('package', window.location.href);
-                window.location.replace(window.location.origin + '/web/ui/login');
+                const sRefresh: any = await tokenRefresh();
+                if (sRefresh.success) {
+                    localStorage.setItem('accessToken', sRefresh.accessToken);
+                    localStorage.setItem('refreshToken', sRefresh.refreshToken);
+                    if (error.response.config.url !== `/api/login`) {
+                        sData = request(error.config);
+                    } else {
+                        return error;
+                    }
+                } else {
+                    localStorage.setItem('package', window.location.href);
+                    window.location.replace(window.location.origin + '/web/ui/login');
+                    return error;
+                }
             } else {
                 return error;
             }

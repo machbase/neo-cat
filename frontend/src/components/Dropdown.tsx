@@ -3,14 +3,16 @@ import './Dropdown.css';
 
 export const Dropdown = ({
     txt,
-    list,
     initVal,
-    callback,
+    list = [],
+    disable = false,
+    callback = () => {},
 }: {
     txt: string;
-    list: { key: string; value: string }[];
     initVal: string;
-    callback: (item: { key: string; value: string }) => void;
+    list?: { key: string; value: string }[];
+    disable?: boolean;
+    callback?: (item: { key: string; value: string }) => void;
 }) => {
     const [sIsOpen, setIsOpen] = useState<boolean>(false);
 
@@ -25,7 +27,7 @@ export const Dropdown = ({
             <div className='drop-down-header' onClick={() => setIsOpen(!sIsOpen)}>
                 <span>{initVal ?? ''}</span>
             </div>
-            {sIsOpen && (
+            {sIsOpen && !disable && (
                 <div className='drop-down-body'>
                     {list.map((pItem, aIdx: number) => {
                         return (
