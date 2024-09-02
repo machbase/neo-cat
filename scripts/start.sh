@@ -2,5 +2,8 @@
     --log-level DEBUG \
     --pid ./.backend/pid \
     --interval $INTERVAL \
+    --tag-prefix "$TAG_PREFIX" \
     --in-load \
-    --out-http "http://localhost:5654/db/write/${TABLE_NAME}?timeformat=s&method=insert"
+    --in-cpu \
+    --in-mem \
+    --out-mqtt "tcp://127.0.0.1:5653/db/append/${TABLE_NAME}:csv"

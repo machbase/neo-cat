@@ -9,9 +9,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/machbase/neo-client/pkg/pstag"
-	"github.com/machbase/neo-client/pkg/pstag/plugin"
-	"github.com/machbase/neo-client/pkg/util"
+	"neo-cat/backend/pstag"
+	"neo-cat/backend/pstag/plugin"
+	"neo-cat/backend/util"
 )
 
 var usageStr = `
