@@ -6,8 +6,8 @@ machbase-neo's *watch-cat*, rather than *watch-dog*.
 
 **Features & Todo**
 - [x] System load
-- [ ] CPU
-- [ ] Memory
+- [x] CPU
+- [x] Memory
 - [ ] Disk Usage
 
 ## Build
