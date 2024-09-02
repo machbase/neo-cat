@@ -1,1 +1,2 @@
-taskkill /F /FI "PID eq $(type .\.backend\pid)"
+SET /P PID=<.\.backend\pid
+TASKKILL /F /PID %PID%
