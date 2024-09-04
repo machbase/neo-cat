@@ -1,22 +1,21 @@
 start:
   - on: windows
-    run: |
-      ./.backend/start.cmd
-  - run: |
-      ./.backend/start.sh
+    run: ./.backend/start.cmd
+  - run: ./.backend/start.sh
 stop:
   - on: windows
-    run: |
-      ./.backend/stop.cmd
-  - run: |
-      ./.backend/stop.sh
+    run: ./.backend/stop.cmd
+  - run: ./.backend/stop.sh
 
 
 auto_start: false
 
 env:
-  - INTERVAL=10s
-  - TABLE_NAME=example
+  - DEBUG=false
 
 stdout_log: debug
 stderr_log: warn
+
+http_proxy:
+  prefix: /api/
+  address: unix://../store/.sock

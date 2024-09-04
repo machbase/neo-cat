@@ -1,5 +1,4 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
-import { tokenRefresh } from './api';
 
 // Create an axios instance
 const baseURL = '/web';
@@ -19,15 +18,11 @@ interface CustomHeaders {
 request.interceptors.request.use(
     (config: any) => {
         const sHeaders = config.headers as CustomHeaders;
-        const envConfig = config.url.match(/^\/api\/pkgs\/storage/gm);
-        const drawChart = config.url.match(/\/api\/tql$/gm);
-        const methodPOST = (config?.method as string).toUpperCase() === 'post'.toUpperCase();
-        const accessToken = localStorage.getItem('accessToken');
+        const accessToken = localStorage.getItem('token');
 
-        if ((drawChart || envConfig) && methodPOST) {
-            sHeaders['Content-Type'] = 'text/plain';
+        if (accessToken != null && !config.url.match(/^\/db\//gm)) {
+            sHeaders.Authorization = `Bearer ${accessToken}`;
         }
-        sHeaders.Authorization = `Bearer ${accessToken}`;
         return config;
     },
     (error: AxiosError) => {
@@ -53,38 +48,40 @@ request.interceptors.response.use(
         }
         const res = response.data;
 
-        // do something with respones
+        // do something with response
         return res;
     },
     async (error: any) => {
-        let sData;
-        if (error.response && error.response.status === 401) {
-            if (error.response.config.url !== `/api/relogin`) {
-                const sRefresh: any = await tokenRefresh();
-                if (sRefresh.success) {
-                    localStorage.setItem('accessToken', sRefresh.accessToken);
-                    localStorage.setItem('refreshToken', sRefresh.refreshToken);
-                    if (error.response.config.url !== `/api/login`) {
-                        sData = request(error.config);
-                    } else {
-                        return error;
-                    }
-                } else {
-                    localStorage.setItem('package', window.location.href);
-                    window.location.replace(window.location.origin + '/web/ui/login');
-                    return error;
-                }
-            } else {
-                return error;
-            }
-            if (sData) {
-                return sData;
-            }
-            return error;
-        }
-        if (error.response && error.response.status !== 401) {
-            return error.response;
-        }
+        console.log("error", error);
+        return error.response.data;
+        // let sData;
+        // if (error.response && error.response.status === 401) {
+        //     if (error.response.config.url !== `/api/relogin`) {
+        //         const sRefresh: any = await tokenRefresh();
+        //         if (sRefresh.success) {
+        //             localStorage.setItem('accessToken', sRefresh.accessToken);
+        //             localStorage.setItem('refreshToken', sRefresh.refreshToken);
+        //             if (error.response.config.url !== `/api/login`) {
+        //                 sData = request(error.config);
+        //             } else {
+        //                 return error;
+        //             }
+        //         } else {
+        //             localStorage.setItem('package', window.location.href);
+        //             window.location.replace(window.location.origin + '/web/ui/login');
+        //             return error;
+        //         }
+        //     } else {
+        //         return error;
+        //     }
+        //     if (sData) {
+        //         return sData;
+        //     }
+        //     return error;
+        // }
+        // if (error.response && error.response.status !== 401) {
+        //     return error.response;
+        // }
     }
 );
 

@@ -27,3 +27,6 @@ yarn-error.log*
 neo-cat
 neo-cat.exe
 neo-cat-package.tgz
+sock
+data.db
+pid.txt

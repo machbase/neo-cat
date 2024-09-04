@@ -1,65 +1,108 @@
 import request from './index';
-import { PKG_NAME, ENV_FILE } from '../utils/constants';
 
-// TYPES
-export type PKG_ACTION = 'status' | 'start' | 'stop';
-
-// CONFIG
-/** Get Pkg action for `SYS`
- * @action PKG_ACTION
- */
-export const getPkgAction = (action: PKG_ACTION) => {
+// backend: count users
+export const countUsers = async () => {
     return request({
         method: 'GET',
-        url: `/api/pkgs/process/${PKG_NAME}/${action}`,
+        baseURL: '/web/apps/neo-cat',
+        url: '/api/count_users',
     });
-};
-/** Get pkg Env for `NEO USER`
- * read content to the filename
- */
-export const getPkgEnv = () => {
-    return request({
-        method: 'GET',
-        url: `/api/pkgs/storage/${PKG_NAME}/${ENV_FILE}`,
-    });
-};
-/** Set pkg Env for `SYS`
- * write content to the filename
- * @content string
- */
-export const setPkgEnv = (content: { INTERVAL: string; TABLE_NAME: string }) => {
-    let data = Object.entries(content)
-        .map(([key, value]) => {
-            return `${key}=${value}`;
-        })
-        .join('\n');
+}
+
+// backend: create user
+export const createUser = async (username: string, password: string) => {
+    const data = `{"username": "${username}", "password": "${password}"}`;
     return request({
         method: 'POST',
-        url: `/api/pkgs/storage/${PKG_NAME}/${ENV_FILE}`,
+        baseURL: '/web/apps/neo-cat',
+        url: '/api/users',
         data: data,
     });
-};
+}
 
-// CHART
-export const getTqlChart = (aData: string) => {
+export const loginUser = async (username: string, password: string) => {
+    const data = `{"username": "${username}", "password": "${password}"}`;
     return request({
         method: 'POST',
-        url: `/api/tql`,
-        data: aData,
+        baseURL: '/web/apps/neo-cat',
+        url: '/api/login',
+        data: data,
     });
-};
+}
 
-// JWT
-export const checkToken = () => {
+// backend: setConfig
+export const setConfig = async (key: string, val: string) => {
+    const data = `{"${key}": "${val}"}`;
+    return request({
+        method: 'POST',
+        baseURL: '/web/apps/neo-cat',
+        url: '/api/configs',
+        data: data,
+    });
+}
+
+// backend: getConfig
+export const getConfig = async (key: string) => {
     return request({
         method: 'GET',
-        url: `/api/check`,
+        baseURL: '/web/apps/neo-cat',
+        url: `/api/configs/${key}`
     });
-};
-export const tokenRefresh = async () => {
-    return await request({
-        method: 'POST',
-        url: '/api/relogin',
-        data: { refreshToken: localStorage.getItem('refreshToken') },
+}
+
+// backend: control/start
+export const startControl = async () => {
+    return request({
+        method: 'GET',
+        baseURL: '/web/apps/neo-cat',
+        url: '/api/control/start',
     });
-};
+}
+
+// backend: control/stop
+export const stopControl = async () => {
+    return request({
+        method: 'GET',
+        baseURL: '/web/apps/neo-cat',
+        url: '/api/control/stop',
+    });
+}
+
+// backend: control/status
+export const statusControl = async () => {
+    return request({
+        method: 'GET',
+        baseURL: '/web/apps/neo-cat',
+        url: '/api/control/status',
+    });
+}
+
+// neo: query
+export const queryTagData = async (table: string, tag: string, durationSec: number) => {
+    const sql = `
+            SELECT
+                time, value
+            FROM
+                ${table}
+            WHERE
+                name = '${tag}'
+            AND time BETWEEN (
+                    SELECT MAX_TIME-${durationSec}000000000 FROM V$${table}_STAT WHERE name = '${tag}'
+                )
+                AND (
+                    SELECT MAX_TIME FROM V$${table}_STAT WHERE name = '${tag}'
+                )
+            LIMIT 0, 1000000
+    `;
+    return request({
+        method: 'GET',
+        baseURL: ``,
+        url: `/db/query`,
+        params: {
+            q: sql,
+            format: 'json',
+            timeformat: 'ms',
+            transpose: false,
+        },
+    });
+}

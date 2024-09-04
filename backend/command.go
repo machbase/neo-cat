@@ -5,75 +5,20 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
-	"time"
 
-	"neo-cat/backend/pstag"
-	"neo-cat/backend/pstag/plugin"
 	"neo-cat/backend/util"
 )
 
-var usageStr = `
-Usage: neo-cat [options]
-
-Options:
-	--help, -h              Show this help message
-	--interval <duration>   The interval to report the statistics (default: 10s, min: 1s)
-	--tag-prefix <prefix>   The prefix of the tag name
-	--pid <path>            Write PID file
-	--log-filename <path>   Log file path (default: -)
-	--log-level <level>     Log level (default: INFO), DEBUG, INFO, WARN, ERROR
-	--log-max-size <size>   Maximum size of the log file in MB (default: 100)
-	--log-max-age <days>    Maximum days to retain old log files (default: 7)
-	--log-max-backups <n>   Maximum number of old log files to retain (default: 10)
-	--log-compress          Compress the old log files (default: false)
-`
-
-func usage() {
-	fmt.Printf("%s\n", strings.ReplaceAll(usageStr, "\t", "    "))
-	plugin.PrintUsage()
-	os.Exit(0)
-}
-
 func Run() int {
-	optInterval := flag.Duration("interval", 10*time.Second, "The interval to report the statistics")
 	optPid := flag.String("pid", "", "pid file")
-	optTagPrefix := flag.String("tag-prefix", "", "tag prefix")
-	optLogFilename := flag.String("log-filename", "-", "log file path")
-	optLogLevel := flag.String("log-level", "INFO", "log level")
-	optLogMaxSize := flag.Int("log-max-size", 100, "maximum size of the log file in MB")
-	optLogMaxAge := flag.Int("log-max-age", 7, "maximum number of days to retain old log files")
-	optLogMaxBackups := flag.Int("log-max-backups", 10, "maximum number of old log files to retain")
-	optLogCompress := flag.Bool("log-compress", false, "compress the log backup files")
+	optDebug := flag.Bool("debug", false, "debug mode")
+	optListen := flag.String("listen", "unix://./sock", "listen address")
+	optDatabase := flag.String("database", "./data.db", "config database file")
 
-	optInputs := map[string]any{}
-	for _, name := range plugin.GetInletNames() {
-		reg := plugin.GetInletRegistry(name)
-		switch def := reg.ArgDefault.(type) {
-		case string:
-			optInputs[name] = flag.String(name, def, reg.ArgDesc)
-		case bool:
-			optInputs[name] = flag.Bool(name, def, reg.ArgDesc)
-		}
-	}
-
-	optOutputs := map[string]any{}
-	for _, name := range plugin.GetOutletNames() {
-		reg := plugin.GetOutletRegistry(name)
-		switch def := reg.ArgDefault.(type) {
-		case string:
-			optOutputs[name] = flag.String(name, def, reg.ArgDesc)
-		case bool:
-			optOutputs[name] = flag.Bool(name, def, reg.ArgDesc)
-		}
-	}
-	flag.Usage = usage
 	flag.Parse()
 
-	if *optLogFilename != "" {
-		util.InitLogger(*optLogFilename, *optLogLevel, *optLogMaxSize, *optLogMaxAge, *optLogMaxBackups, *optLogCompress)
-	}
+	util.InitLogger("-", "DEBUG", 10, 1, 1, false)
 
 	// PID file
 	if optPid != nil {
@@ -85,38 +30,12 @@ func Run() int {
 		}()
 	}
 
-	process := pstag.New(
-		pstag.WithInterval(*optInterval),
-		pstag.WithTagPrefix(*optTagPrefix),
+	svr := NewServer(
+		WithListenAddress(*optListen),
+		WithDebugMode(*optDebug),
+		WithDatabase(*optDatabase),
 	)
-
-	for name, opt := range optInputs {
-		switch v := opt.(type) {
-		case *bool:
-			if *v {
-				process.AddInput(plugin.NewInlet(name))
-			}
-		case *string:
-			if *v != "" {
-				process.AddInput(plugin.NewInlet(name, *v))
-			}
-		}
-	}
-
-	for name, opt := range optOutputs {
-		switch v := opt.(type) {
-		case *bool:
-			if *v {
-				process.AddOutput(plugin.NewOutlet(name))
-			}
-		case *string:
-			if *v != "" {
-				process.AddOutput(plugin.NewOutlet(name, *v))
-			}
-		}
-	}
-
-	go process.Run()
+	go svr.Start()
 
 	// wait Ctrl+C
 	done := make(chan os.Signal, 1)
@@ -124,7 +43,7 @@ func Run() int {
 	fmt.Println("started, press ctrl+c to stop...")
 	<-done
 
-	process.Stop()
+	svr.Stop()
 
 	return 0
 }

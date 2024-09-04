@@ -48,8 +48,9 @@ type PsTag struct {
 	reportCh            chan *report.Report
 	shouldCloseReportCh bool
 
-	closeCh chan bool
-	closeWg sync.WaitGroup
+	closeCh   chan bool
+	closeWg   sync.WaitGroup
+	isRunning bool
 }
 
 func (pt *PsTag) AddInput(inlet report.Inlet) {
@@ -68,15 +69,23 @@ func (pt *PsTag) Run() {
 	slog.Info("set", "interval", pt.interval, "inputs", len(pt.inputs), "outputs", len(pt.outputs))
 
 	for _, out := range pt.outputs {
-		out.Start()
+		if err := out.Start(); err != nil {
+			return
+		}
 	}
 	for _, in := range pt.inputs {
-		in.Start(pt.interval, pt.tagPrefix)
+		if err := in.Start(pt.interval, pt.tagPrefix); err != nil {
+			return
+		}
 	}
 
 	pt.closeCh = make(chan bool)
 	pt.closeWg.Add(1)
+	pt.isRunning = true
 	go func() {
+		defer func() {
+			pt.isRunning = false
+		}()
 		slog.Info("start")
 		for {
 			select {
@@ -106,4 +115,8 @@ func (pt *PsTag) Stop() {
 		close(pt.reportCh)
 	}
 	slog.Info("stopped")
+}
+
+func (pt *PsTag) Running() bool {
+	return pt.isRunning
 }

@@ -1,130 +1,46 @@
 import './App.css';
-import { useEffect, useRef, useState } from 'react';
-import { Btn } from './components/Btn.tsx';
-import { Chart } from './components/Chart.tsx';
-import { Dropdown } from './components/Dropdown.tsx';
-import { Inp } from './components/Inp.tsx';
-import { checkToken, getPkgAction, getPkgEnv, PKG_ACTION, setPkgEnv } from './api/api.ts';
-import { getUserName } from './utils/getUserName.ts';
-import { ADMIN } from './utils/constants.ts';
+import { useEffect, useState } from 'react';
+import { countUsers } from './api/api.ts';
+import { Setup } from './setup.tsx';
+import { LoginForm, LogoutForm } from './login.tsx';
+import { ProcessControl } from './process.tsx';
+
+import '@shoelace-style/shoelace/dist/themes/light.css';
+import { setBasePath } from '@shoelace-style/shoelace/dist/utilities/base-path';
+setBasePath('https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/');
 
 const App = () => {
-    const chartRef = useRef<HTMLInputElement>(null);
-    const [sEnvStatus, setEnvStatus] = useState<boolean>(false);
-    const [sPkgStatus, setPkgStatus] = useState<string | undefined>(undefined);
-    const [sPayload, setPayload] = useState<{ INTERVAL: string; TABLE_NAME: string } | undefined>(undefined);
-    const [sChartId, setChartId] = useState<string>('');
-    const isAdmin = getUserName() ? getUserName().toUpperCase() === ADMIN.toUpperCase() : false;
-    const INTERVALLIST: { key: string; value: string }[] = [
-        { key: '1s', value: '1' },
-        { key: '5s', value: '5' },
-        { key: '15s', value: '15' },
-        { key: '30s', value: '30' },
-    ];
-    const PKG_RUNNING = 'running';
-    const PKG_STOPPED = 'stopped';
+    const [sCountUsers, setCountUsers] = useState<number>(0);
+    const [sToken, setToken] = useState<string | null>(localStorage.getItem('token'));
 
-    const handleAction = (key: 'save' | 'start' | 'stop') => {
-        // SYS ONLY
-        if (key === 'save') return savePkgEnv();
-        if (key === 'start') return sendPkgAction('start');
-        if (key === 'stop') return sendPkgAction('stop');
-    };
-    const updatePayload = (key: string, value: string) => {
-        setPayload((prev: { INTERVAL: string; TABLE_NAME: string }) => {
-            return { ...prev, [key]: value };
-        });
-    };
-    const handleInp = (e: React.ChangeEvent<HTMLInputElement>) => {
-        updatePayload('TABLE_NAME', e.target.value);
-    };
-    const handleDropdown = (item: { key: string; value: string }) => {
-        updatePayload('INTERVAL', item.key);
-    };
-    const savePkgEnv = async () => {
-        if (!isAdmin) return;
-        const saveRes: any = await setPkgEnv(sPayload);
-        if (saveRes?.success) fetchPkgEnv();
-    };
-    const fetchPkgEnv = async () => {
-        const envRes: any = await getPkgEnv();
-        if (String(envRes)) {
-            const env: { INTERVAL: string; TABLE_NAME: string } = { INTERVAL: '', TABLE_NAME: '' };
-            envRes.split('\n').map((item: string) => {
-                const tmp = item.split('=');
-                env[tmp[0]] = tmp[1];
-                return;
-            });
-            setPayload(env);
-            setEnvStatus(true);
-            !sEnvStatus && sendPkgAction('status');
-        } else {
-            setPayload({ INTERVAL: '1s', TABLE_NAME: 'example' });
-            setEnvStatus(false);
-        }
-    };
-    // getPkgAction
-    const sendPkgAction = async (action: PKG_ACTION) => {
-        if (action !== 'status' && !isAdmin) return;
-        if (action === 'start') setChartUID();
-        const actionRes: any = await getPkgAction(action);
-        if (actionRes && actionRes?.success && actionRes?.data) setPkgStatus(actionRes?.data?.status);
-        else {
-            setEnvStatus(false);
-            setPkgStatus(undefined);
-        }
-    };
-    const setChartUID = () => {
-        const chartID = new Date().getTime();
-        setChartId(chartID.toString());
-    };
     const initApp = async () => {
-        setChartUID();
-        const checkRes: any = await checkToken();
-        checkRes && checkRes?.success && fetchPkgEnv();
+        const rsp = await countUsers();
+        rsp && rsp?.data && setCountUsers(rsp.data.count);
     };
     useEffect(() => {
         initApp();
     }, []);
 
-    return (
-        <div className='App'>
-            {isAdmin ? (
-                <>
-                    <div className='app-body'>
-                        <div className='app-action'>
-                            <Btn txt='Start' type='CREATE' disable={!sEnvStatus || sPkgStatus === PKG_RUNNING} callback={() => handleAction('start')} />
-                            <Btn txt='Stop' type='DELETE' disable={!sEnvStatus || sPkgStatus === PKG_STOPPED} callback={() => handleAction('stop')} />
-                        </div>
-                        <div className='app-config'>
-                            {sPayload && <Inp label='To Table' callback={handleInp} initVal={sPayload.TABLE_NAME} />}
-                            {sPayload && <Dropdown txt='Interval' list={INTERVALLIST} callback={handleDropdown} initVal={sPayload.INTERVAL} />}
-                            <div className='btn-group'>
-                                <Btn txt='Save' type='CREATE' disable={sPkgStatus === PKG_RUNNING} callback={() => handleAction('save')} />
-                            </div>
-                        </div>
-                    </div>
-                    <span>now-30m ~ now</span>
-                    <div ref={chartRef} className='app-chart'>
-                        {sPayload && sEnvStatus && sPkgStatus === PKG_RUNNING && <Chart config={sPayload} appChartRef={chartRef} chartId={sChartId} />}
-                    </div>
-                </>
-            ) : (
-                <div className='app-body'>
-                    <div className='app-config'>
-                        {sPayload ? (
-                            <>
-                                <Inp label='To Table' disable={true} initVal={sPayload.TABLE_NAME} />
-                                <Dropdown txt='Interval' disable={true} initVal={sPayload.INTERVAL} />
-                            </>
-                        ) : (
-                            <span>Neo cat 🐈</span>
-                        )}
-                    </div>
-                </div>
-            )}
-        </div>
-    );
+    if (sCountUsers === 0) {
+        return (
+            <div className='App'>
+                <Setup></Setup>
+            </div>
+        );
+    } else if (sToken === null || sToken == '') {
+        return (
+            <div className='App'>
+                <LoginForm callback={(tok: string) => {setToken(tok) }}></LoginForm>
+            </div>
+        )
+    } else {
+        return (
+            <div className='App'>
+                <LogoutForm></LogoutForm>
+                <ProcessControl></ProcessControl>
+            </div>
+        )
+    }
 };
 
 export default App;
