@@ -1,5 +1,21 @@
 import request from './index';
 
+export const createTable = async (tableName: string) => {
+    const sql = `CREATE TAG TABLE IF NOT EXISTS ${tableName} (`+
+                `name varchar(200) primary key,`+
+                `time datetime basetime,`+
+                `value double summarized`+
+                `)`
+    return request({
+        method: 'GET',
+        baseURL: ``,
+        url: `/db/query`,
+        params: {
+            q: sql,
+        },
+    });
+}
+
 // backend: count users
 export const countUsers = async () => {
     return request({
@@ -50,24 +66,30 @@ export const getConfig = async (key: string) => {
     });
 }
 
-export const getConfigIntervalSec = async (defaultSec: number):Promise<number> => {
+export const parseDuration = (str: string): number => {
+    var interval = 0;
+    var sec = str.match(/(\d+)*s/)
+    var min = str.match(/(\d+)*m/)
+    var hour = str.match(/(\d+)*h/)
+    var day = str.match(/(\d+)*d/)
+    if (day) { interval += parseInt(day[1]) * 86400 }
+    if (hour) { interval += parseInt(hour[1]) * 3600 }
+    if (min) { interval += parseInt(min[1]) * 60 }
+    if (sec) { interval += parseInt(sec[1]) }
+    return interval
+}
+
+export const getConfigIntervalSec = async (defaultSec: number): Promise<number> => {
     const rspInterval: any = await getConfig('interval');
     if (rspInterval.success) {
         const str = rspInterval.data.interval;
-        var interval = 0;
-        var sec = str.match(/(\d+)*s/)
-        var min = str.match(/(\d+)*m/)
-        var hour = str.match(/(\d+)*h/)
-        if (hour) { interval += parseInt(hour[1]) * 3600 }
-        if (min) { interval += parseInt(min[1]) * 60 }
-        if (sec) { interval += parseInt(sec[1]) }
-        return interval
+        return parseDuration(str);
     } else {
         return defaultSec;
     }
 }
 
-export const getConfigTableName = async (defaultTableName: string):Promise<string> => {
+export const getConfigTableName = async (defaultTableName: string): Promise<string> => {
     const rspTableName: any = await getConfig('table_name');
     if (rspTableName.success) {
         return rspTableName.data.table_name;

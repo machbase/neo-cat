@@ -7,7 +7,7 @@ import SlAlert from '@shoelace-style/shoelace/dist/react/alert';
 import SlIcon from '@shoelace-style/shoelace/dist/react/icon';
 import type SlInputElement from '@shoelace-style/shoelace/dist/components/input/input';
 import type SlSelectElement from '@shoelace-style/shoelace/dist/components/select/select';
-import { setConfig, createUser, getConfig, getConfigTableName, getConfigIntervalSec } from './api/api.ts';
+import { setConfig, createUser, getConfigTableName, getConfigIntervalSec, createTable } from './api/api.ts';
 
 export function Setup() {
     const [stage, setStage] = useState('user');
@@ -28,6 +28,12 @@ export function Setup() {
 function StageFin(conf: { username: string, password: string, tableName: string, interval: string }) {
     const saveSettings = async () => {
         var errCount = 0;
+        const rspCreTable: any = await createTable(conf.tableName);
+        if (!rspCreTable.success) {
+            errCount++;
+            document.getElementById('checkTableName')!.setAttribute('name', 'exclamation-circle');
+            return
+        }
         const rspTableName: any = await setConfig('table_name', conf.tableName.toUpperCase());
         if (rspTableName.success) {
             document.getElementById('checkTableName')!.setAttribute('name', 'check2-circle');
@@ -60,7 +66,7 @@ function StageFin(conf: { username: string, password: string, tableName: string,
         btnDone.addEventListener('click', () => {
             document.location.reload();
         });
-    });
+    },[]);
 
     return (
         <div style={{ paddingTop: '20px' }}>
@@ -112,7 +118,7 @@ function StageUser({ callback }: { callback: (username: string, password: string
             }
             callback(username, password1);
         });
-    });
+    }, []);
 
     return (
         <div style={{ padding: '20px' }}>
@@ -162,34 +168,28 @@ export function StageBackendConfig({ callback }: { callback: (conf: BackendConfi
     );
 }
 
-export function Settings(): any {
-    const [tableName, setTableName] = useState('example');
-    const [interval, setInterval] = useState('10s');
-
-    const initConfig = async () => {
-        const rspTableName = await getConfigTableName('example');
-        const rspInterval = await getConfigIntervalSec(10);
-        setTableName(rspTableName);
-        setInterval(`${rspInterval}s`);
-    }
-    useEffect(() => {
-        initConfig();
-    });
-
+export function Settings(pref: {tableName: string, interval: string}): any {
     const onUpdate = async (bc: BackendConfig) => {
-        if (bc.tableName.length > 0 && bc.tableName !== tableName) {
-            const rspTableName = await setConfig('table_name', bc.tableName.toUpperCase());
-            setTableName(bc.tableName);
-            console.log('update table_name', bc.tableName);
+        if (bc.tableName.length > 0 && bc.tableName !== pref.tableName) {
+            const rspCreTable: any = await createTable(bc.tableName);
+            if (!rspCreTable.success) {
+                console.log("ERROR", rspCreTable.reason)
+                return
+            }    
+            const rspTableName: any = await setConfig('table_name', bc.tableName.toUpperCase());
+            if (!rspTableName.success) {
+                console.log("ERROR", rspTableName.reason)
+            }
         }
-        if (bc.interval !== interval) {
-            const rspInterval = await setConfig('interval', bc.interval);
-            setInterval(bc.interval);
-            console.log('update interval', bc.interval);
+        if (bc.interval !== pref.interval) {
+            const rspInterval: any = await setConfig('interval', bc.interval);
+            if (!rspInterval.success) {
+                console.log("ERROR", rspInterval.reason)
+            }
         }
     }
     return (
-        <FormSettings tableName={tableName} interval={interval} submitText='Update' callback={onUpdate}></FormSettings>
+        <FormSettings tableName={pref.tableName} interval={pref.interval} submitText='Update' callback={onUpdate}></FormSettings>
     );
 }
 
@@ -224,7 +224,7 @@ export function FormSettings(pref: { tableName?: string, interval?: string, subm
             var conf: BackendConfig = { tableName: tableName, interval: interval }
             pref.callback(conf);
         });
-    });
+    },[pref.tableName, pref.interval]);
     return (
         <form id='destination-form' >
             <SlInput
