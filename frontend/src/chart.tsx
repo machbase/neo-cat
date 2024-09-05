@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
-import { queryTagData, getConfig } from "./api/api";
+import { statusControl, queryTagData, getConfig, getConfigIntervalSec, getConfigTableName } from "./api/api";
 import { useTimeout } from "./hooks/useTimeout";
+import SlBadge from '@shoelace-style/shoelace/dist/react/badge';
 import * as echarts from 'echarts';
 
 function chartOptionTemplate(title: string, series: string[]): any {
@@ -29,7 +30,12 @@ function TagChart(conf: { title: string, tags: string[], tableName: string, inte
             const tag: any = await queryTagData(conf.tableName, conf.tags[i], conf.durationSec);
             if (tag.success) {
                 const opt = { ...chartOptions };
-                opt.series[i].data = tag.data.rows;
+                opt.series[i].data = [];
+                const rows: number[][] = tag.data.rows;
+                for (let j = 0; j < rows.length; j++) {
+                    const v: number[] = rows[j];
+                    opt.series[i].data.push({ name: v[0], value: [v[0], v[1]], symbol: 'none' });
+                }
                 setChartOptions(opt)
             }
         }
@@ -54,39 +60,57 @@ function TagChart(conf: { title: string, tags: string[], tableName: string, inte
     )
 }
 
+export function StatusBanner(conf: { interval: number, statusCallback: (status: string) => void }): any {
+    const [status, setStatus] = useState<string>('unknown');
+    const [variant, setVariant] = useState<'success' | 'danger' | 'neutral'>('neutral');
+    const [sPulse, setPulse] = useState<boolean>(false);
+
+    const loadStatus = async () => {
+        const rspStatus: any = await statusControl();
+        var st = 'unknown';
+        if (rspStatus.success) {
+            st = rspStatus.data.status
+        }
+        if (st === 'running') {
+            setVariant('success')
+            setPulse(true)
+        } else if (st === 'stopped') {
+            setVariant('danger')
+            setPulse(false)
+        } else {
+            setVariant('neutral')
+            setPulse(false)
+        }
+        setStatus(st);
+        conf.statusCallback(st);
+    }
+    loadStatus();
+    useTimeout(loadStatus, conf.interval);
+    return (
+        <SlBadge variant={variant} pill pulse={sPulse}>{status}</SlBadge>
+    )
+}
+
 export function GlanceChart() {
     var tableName = 'example';
     var interval = 3000;
-    var durationSec = 60;
+    var durationSec = 5 * 60;
 
     const initConfig = async () => {
-        // get config from backend
-        const rspTableName: any = await getConfig('table_name')
-        if (rspTableName.success) {
-            tableName = rspTableName.data.table_name
-        }
-        const rspInterval: any = await getConfig('interval');
-        if (rspInterval.success) {
-            const str = rspInterval.data.interval;
-            var interval = 0;
-            var sec = str.match(/(\d+)*s/)
-            var min = str.match(/(\d+)*m/)
-            var hour = str.match(/(\d+)*h/)
-            if (hour) { interval += parseInt(hour[1]) * 3600 }
-            if (min) { interval += parseInt(min[1]) * 60 }
-            if (sec) { interval += parseInt(sec[1])  }
-            durationSec = interval
-        }
+        tableName = await getConfigTableName(tableName);
+        durationSec = await getConfigIntervalSec(durationSec);
     };
     useEffect(() => {
         initConfig();
     }, []);
 
     return (
-        <div style={{ display: 'inline-flex', flexFlow: 'wrap' }}>
-            <TagChart tableName={tableName} interval={interval} durationSec={durationSec} title='System Load' tags={['load1', 'load5', 'load15']} />
-            <TagChart tableName={tableName} interval={interval} durationSec={durationSec} title='CPU Usage' tags={['cpu.percent']} />
-            <TagChart tableName={tableName} interval={interval} durationSec={durationSec} title='Memory Usage' tags={['mem.used_percent']} />
-        </div>
+        <>
+            <div style={{ display: 'inline-flex', flexFlow: 'wrap' }}>
+                <TagChart tableName={tableName} interval={interval} durationSec={durationSec} title='System Load' tags={['load1', 'load5', 'load15']} />
+                <TagChart tableName={tableName} interval={interval} durationSec={durationSec} title='CPU Usage' tags={['cpu.percent']} />
+                <TagChart tableName={tableName} interval={interval} durationSec={durationSec} title='Memory Usage' tags={['mem.used_percent']} />
+            </div>
+        </>
     )
 }

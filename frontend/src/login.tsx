@@ -57,13 +57,14 @@ export function LoginForm({ callback }: { callback: (token: string) => void }) {
 }
 
 export function LogoutForm() {
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        window.location.reload();
-    }
     return (
         <div>
-            <SlButton onClick={handleLogout} variant='primary'>Logout</SlButton>
+            <SlButton onClick={Logout} variant='primary'>Logout</SlButton>
         </div>
     );
+}
+
+export function Logout() {
+    localStorage.removeItem('token');
+    window.location.reload();
 }

@@ -7,12 +7,8 @@ import SlAlert from '@shoelace-style/shoelace/dist/react/alert';
 import SlIcon from '@shoelace-style/shoelace/dist/react/icon';
 import type SlInputElement from '@shoelace-style/shoelace/dist/components/input/input';
 import type SlSelectElement from '@shoelace-style/shoelace/dist/components/select/select';
-import styled from 'styled-components';
+import type SlButtonElement from '@shoelace-style/shoelace/dist/components/button/button';
 import { setConfig, createUser } from './api/api.ts';
-
-const Wrapper = styled.div`
-    padding-top: 20px;
-`;
 
 export function Setup() {
     const [stage, setStage] = useState('user');
@@ -24,7 +20,7 @@ export function Setup() {
         case 'user':
             return <StageUser callback={(username, password) => { setUsername(username); setPassword(password); setStage('destination'); }} />;
         case 'destination':
-            return <StageDestination callback={(tableName, interval) => { setTableName(tableName); setInterval(interval); setStage('fin') }} />;
+            return <StageBackendConfig callback={(c: BackendConfig) => { setTableName(c.tableName); setInterval(c.interval); setStage('fin') }} />;
         case 'fin':
             return <StageFin username={username} password={password} tableName={tableName} interval={interval} />;
     }
@@ -65,10 +61,10 @@ function StageFin(conf: { username: string, password: string, tableName: string,
         btnDone.addEventListener('click', () => {
             document.location.reload();
         });
-    }, []);
+    });
 
     return (
-        <Wrapper>
+        <div style={{ paddingTop: '20px' }}>
             <SlAlert variant="success" open>
                 <SlIcon slot="icon" name="database-fill-gear"></SlIcon>
                 <strong>Setup completion...</strong><br />
@@ -79,7 +75,7 @@ function StageFin(conf: { username: string, password: string, tableName: string,
             </SlAlert>
             <br />
             <SlButton variant='primary' id="btnDone" disabled >Done</SlButton>
-        </Wrapper>
+        </div>
     );
 }
 
@@ -117,10 +113,10 @@ function StageUser({ callback }: { callback: (username: string, password: string
             }
             callback(username, password1);
         });
-    }, []);
+    });
 
     return (
-        <Wrapper>
+        <div style={{ padding: '20px' }}>
             <SlAlert variant="primary" open>
                 <SlIcon slot="icon" name="gear"></SlIcon>
                 <strong>Setting up</strong><br />
@@ -152,13 +148,43 @@ function StageUser({ callback }: { callback: (username: string, password: string
                 <br />
                 <SlButton type="submit" variant='primary' >Next</SlButton>
             </form>
-        </Wrapper>
+        </div>
     );
 }
 
-function StageDestination({ callback }: { callback: (tableName: string, interval: string) => void }) {
+export interface BackendConfig {
+    tableName: string;
+    interval: string;
+};
+
+export function StageBackendConfig({ callback }: { callback: (conf: BackendConfig) => void }) {
+    return (
+        <FormSettings submitText='Next' callback={callback} ></FormSettings>
+    );
+}
+
+export function Settings(): any {
+    return (
+        <FormSettings submitText='update' callback={(bc: BackendConfig) => { console.log(bc) }}></FormSettings>
+    );
+}
+
+export function FormSettings(pref: { tableName?: string, interval?: string, submitText?: string, callback: (conf: BackendConfig) => void }) {
+    const [btnLabel, setBtnLabel] = useState<string>('OK');
+
     useEffect(() => {
         const form = document.getElementById('destination-form');
+
+        if (pref.tableName) {
+            const inputTableName = form.getElementsByClassName('settings-table-name')[0] as SlInputElement
+            inputTableName.value = pref.tableName;
+        }
+        const selectInterval = form.getElementsByClassName('settings-interval')[0] as SlSelectElement
+        selectInterval.value = pref.interval ? pref.interval : '10s';
+        if (pref.submitText) {
+            setBtnLabel(pref.submitText);
+        }
+
         form.addEventListener('submit', (event) => {
             event.preventDefault();
             const tableName = (document.getElementById('table-name') as SlInputElement).value;
@@ -171,41 +197,36 @@ function StageDestination({ callback }: { callback: (tableName: string, interval
             } else {
                 tableNameError.hidden = true;
             }
-            callback(tableName, interval);
+            var conf: BackendConfig = { tableName: tableName, interval: interval }
+            pref.callback(conf);
         });
-    }, []);
+    });
     return (
-        <Wrapper>
-            <SlAlert variant="primary" open>
-                <SlIcon slot="icon" name="gear"></SlIcon>
-                <strong>Setting up</strong><br />
-                Set the table name and interval.
-            </SlAlert>
+        <form id='destination-form' >
+            <SlInput
+                id='table-name'
+                label='Table name'
+                value=''
+                type='text'
+                className='settings-table-name'
+                clearable />
+            <div id="table-name-error" style={{ color: 'red' }} hidden></div>
             <br />
-            <form id='destination-form' >
-                <SlInput
-                    id='table-name'
-                    label='Table name'
-                    value=''
-                    type="text"
-                    clearable />
-                <div id="table-name-error" style={{ color: 'red' }} hidden></div>
-                <br />
-                <SlSelect
-                    id='interval'
-                    label='Interval'
-                    value='10s'>
-                    <SlOption value="1s">1 sec.</SlOption>
-                    <SlOption value="3s">3 sec.</SlOption>
-                    <SlOption value="5s">5 sec.</SlOption>
-                    <SlOption value="10s">10 sec.</SlOption>
-                    <SlOption value="15s">15 sec.</SlOption>
-                    <SlOption value="30s">30 sec.</SlOption>
-                    <SlOption value="60s">60 sec.</SlOption>
-                </SlSelect>
-                <br />
-                <SlButton type="submit" variant='primary' >Next</SlButton>
-            </form>
-        </Wrapper>
+            <SlSelect
+                id='interval'
+                label='Interval'
+                className='settings-interval'
+                value='10s'>
+                <SlOption value="1s">1 sec.</SlOption>
+                <SlOption value="3s">3 sec.</SlOption>
+                <SlOption value="5s">5 sec.</SlOption>
+                <SlOption value="10s">10 sec.</SlOption>
+                <SlOption value="15s">15 sec.</SlOption>
+                <SlOption value="30s">30 sec.</SlOption>
+                <SlOption value="60s">60 sec.</SlOption>
+            </SlSelect>
+            <br />
+            <SlButton type="submit" variant='primary' >{btnLabel}</SlButton>
+        </form>
     );
 }

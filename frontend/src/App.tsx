@@ -2,7 +2,7 @@ import './App.css';
 import { useEffect, useState } from 'react';
 import { countUsers } from './api/api.ts';
 import { Setup } from './setup.tsx';
-import { LoginForm, LogoutForm } from './login.tsx';
+import { LoginForm } from './login.tsx';
 import { ProcessControl } from './process.tsx';
 
 import '@shoelace-style/shoelace/dist/themes/light.css';
@@ -27,16 +27,15 @@ const App = () => {
                 <Setup></Setup>
             </div>
         );
-    } else if (sToken === null || sToken == '') {
+    } else if (sToken === null || sToken === '') {
         return (
             <div className='App'>
-                <LoginForm callback={(tok: string) => {setToken(tok) }}></LoginForm>
+                <LoginForm callback={(tok: string) => { setToken(tok) }}></LoginForm>
             </div>
         )
     } else {
         return (
             <div className='App'>
-                <LogoutForm></LogoutForm>
                 <ProcessControl></ProcessControl>
             </div>
         )
