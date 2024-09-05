@@ -7,8 +7,7 @@ import SlAlert from '@shoelace-style/shoelace/dist/react/alert';
 import SlIcon from '@shoelace-style/shoelace/dist/react/icon';
 import type SlInputElement from '@shoelace-style/shoelace/dist/components/input/input';
 import type SlSelectElement from '@shoelace-style/shoelace/dist/components/select/select';
-import type SlButtonElement from '@shoelace-style/shoelace/dist/components/button/button';
-import { setConfig, createUser } from './api/api.ts';
+import { setConfig, createUser, getConfig, getConfigTableName, getConfigIntervalSec } from './api/api.ts';
 
 export function Setup() {
     const [stage, setStage] = useState('user');
@@ -164,8 +163,34 @@ export function StageBackendConfig({ callback }: { callback: (conf: BackendConfi
 }
 
 export function Settings(): any {
+    const [tableName, setTableName] = useState('example');
+    const [interval, setInterval] = useState('10s');
+
+    const initConfig = async () => {
+        const rspTableName = await getConfigTableName('example');
+        const rspInterval = await getConfigIntervalSec(10);
+        console.log(rspTableName, rspInterval);
+        setTableName(rspTableName);
+        setInterval(`${rspInterval}s`);
+    }
+    useEffect(() => {
+        initConfig();
+    });
+
+    const onUpdate = async (bc: BackendConfig) => {
+        if (bc.tableName.length > 0 && bc.tableName !== tableName) {
+            const rspTableName = await setConfig('table_name', bc.tableName.toUpperCase());
+            setTableName(bc.tableName);
+            console.log('update table_name', bc.tableName);
+        }
+        if (bc.interval !== interval) {
+            const rspInterval = await setConfig('interval', bc.interval);
+            setInterval(bc.interval);
+            console.log('update interval', bc.interval);
+        }
+    }
     return (
-        <FormSettings submitText='update' callback={(bc: BackendConfig) => { console.log(bc) }}></FormSettings>
+        <FormSettings tableName={tableName} interval={interval} submitText='Update' callback={onUpdate}></FormSettings>
     );
 }
 

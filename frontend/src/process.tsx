@@ -16,7 +16,7 @@ const PKG_STOPPED = 'stopped';
 
 export function ProcessControl() {
     const [controlStatus, setControlStatus] = useState<string>('unknown');
-    var durationSec = 5 * 60*1000;
+    var durationSec = 5 * 60 * 1000;
 
     const initConfig = async () => {
         durationSec = await getConfigIntervalSec(durationSec);
@@ -72,32 +72,35 @@ export function ProcessControl() {
     return (
         <>
             <div style={{ textAlign: 'center' }}>
-                <div style={{display: 'inline-flex', flexFlow: 'nowrap', alignItems: 'start' }}>
-                <StatusBanner interval={durationSec} statusCallback={setControlStatus} />
-                <span style={{ width: 'var(--sl-spacing-3x-large)' }}></span>
-                <SlButtonGroup style={styleGroup}>
-                    <SlTooltip content='Start process'>
-                        <SlButton id='btn-start' onClick={handleStart} disabled><SlIcon name='play' slot='prefix'></SlIcon>Start</SlButton>
-                    </SlTooltip>
-                    <SlTooltip content='Stop process'>
-                        <SlButton id='btn-stop' onClick={handleStop} disabled>
-                            <SlIcon name='stop' slot='prefix'></SlIcon>
-                            Stop
-                        </SlButton>
-                    </SlTooltip>
-                </SlButtonGroup>
-                <SlButtonGroup style={styleGroup}>
-                    <SlButton onClick={handleSettings}><SlIcon name='gear' slot='prefix'></SlIcon>Settings</SlButton>
-                </SlButtonGroup>
-                <SlButtonGroup>
-                    <SlButton onClick={Logout}><SlIcon name='escape' slot='prefix'></SlIcon>Logout</SlButton>
-                </SlButtonGroup>
+                <div style={{ display: 'inline-flex', flexFlow: 'nowrap', alignItems: 'start' }}>
+                    <StatusBanner interval={durationSec} statusCallback={setControlStatus} />
+                    <span style={{ width: 'var(--sl-spacing-3x-large)' }}></span>
+                    <SlButtonGroup style={styleGroup}>
+                        <SlTooltip content='Start process'>
+                            <SlButton id='btn-start' onClick={handleStart} disabled><SlIcon name='play' slot='prefix'></SlIcon>Start</SlButton>
+                        </SlTooltip>
+                        <SlTooltip content='Stop process'>
+                            <SlButton id='btn-stop' onClick={handleStop} disabled>
+                                <SlIcon name='stop' slot='prefix'></SlIcon>
+                                Stop
+                            </SlButton>
+                        </SlTooltip>
+                    </SlButtonGroup>
+                    <SlButtonGroup style={styleGroup}>
+                        <SlButton onClick={handleSettings}><SlIcon name='gear' slot='prefix'></SlIcon>Settings</SlButton>
+                    </SlButtonGroup>
+                    <SlButtonGroup>
+                        <SlButton onClick={Logout}><SlIcon name='escape' slot='prefix'></SlIcon>Logout</SlButton>
+                    </SlButtonGroup>
+                </div>
                 <SlDivider></SlDivider>
-                </div>
                 <div id='control-error' style={{ color: 'red' }} hidden></div>
-                <div style={{ paddingRight: '20px', paddingBottom: '20px' }}>
-                    <GlanceChart/>
-                </div>
+                {controlStatus === PKG_RUNNING ?
+                    <div style={{ paddingRight: '20px', paddingBottom: '20px' }}>
+                        <GlanceChart />
+                    </div>
+                    : <div>...</div>
+                }
             </div>
             <SlDrawer label='Settings' id='settings-drawer'>
                 <Settings />

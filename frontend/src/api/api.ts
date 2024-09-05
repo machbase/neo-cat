@@ -50,7 +50,7 @@ export const getConfig = async (key: string) => {
     });
 }
 
-export const getConfigIntervalSec = async (defaultSec: number) => {
+export const getConfigIntervalSec = async (defaultSec: number):Promise<number> => {
     const rspInterval: any = await getConfig('interval');
     if (rspInterval.success) {
         const str = rspInterval.data.interval;
@@ -67,7 +67,7 @@ export const getConfigIntervalSec = async (defaultSec: number) => {
     }
 }
 
-export const getConfigTableName = async (defaultTableName: string) => {
+export const getConfigTableName = async (defaultTableName: string):Promise<string> => {
     const rspTableName: any = await getConfig('table_name');
     if (rspTableName.success) {
         return rspTableName.data.table_name;
