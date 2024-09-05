@@ -169,7 +169,6 @@ export function Settings(): any {
     const initConfig = async () => {
         const rspTableName = await getConfigTableName('example');
         const rspInterval = await getConfigIntervalSec(10);
-        console.log(rspTableName, rspInterval);
         setTableName(rspTableName);
         setInterval(`${rspInterval}s`);
     }
