@@ -1,1 +1,1 @@
-./.backend/neo-cat --listen unix://../store/.sock --database ../store/data.db --pid ./.backend/pid
+./.backend/neo-cat --listen unix://../storage/.sock --database ../storage/.data.db --pid ./.backend/pid

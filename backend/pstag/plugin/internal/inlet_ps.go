@@ -216,7 +216,7 @@ func NetInput(args []string) func() ([]*report.Record, error) {
 					Precision: 0,
 				},
 				&report.Record{
-					Name:      fmt.Sprintf("net.%s.packet_recv", v.Name),
+					Name:      fmt.Sprintf("net.%s.packets_recv", v.Name),
 					Value:     float64(v.PacketsRecv),
 					Precision: 0,
 				},

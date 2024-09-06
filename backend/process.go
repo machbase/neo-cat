@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"neo-cat/backend/pstag"
 	"neo-cat/backend/pstag/plugin"
+	"runtime"
+	"strings"
 	"time"
 )
 
@@ -31,6 +33,21 @@ func (s *Server) StartProcess() error {
 	s.process.AddInput(plugin.NewInlet("in-load"))
 	s.process.AddInput(plugin.NewInlet("in-cpu"))
 	s.process.AddInput(plugin.NewInlet("in-mem"))
+	s.process.AddInput(plugin.NewInlet("in-host"))
+	if val, err := s.data.GetConfig("in_proto"); err == nil && strings.TrimSpace(val) != "" {
+		if runtime.GOOS != "darwin" {
+			s.process.AddInput(plugin.NewInlet("in-proto", val))
+		}
+	}
+	if val, err := s.data.GetConfig("in_disk"); err == nil && strings.TrimSpace(val) != "" {
+		s.process.AddInput(plugin.NewInlet("in-disk", val))
+	}
+	if val, err := s.data.GetConfig("in_diskio"); err == nil && strings.TrimSpace(val) != "" {
+		s.process.AddInput(plugin.NewInlet("in-diskio", val))
+	}
+	if val, err := s.data.GetConfig("in_net"); err == nil && strings.TrimSpace(val) != "" {
+		s.process.AddInput(plugin.NewInlet("in-net", val))
+	}
 	if tableName != "" {
 		s.process.AddOutput(plugin.NewOutlet("out-mqtt", fmt.Sprintf("tcp://127.0.0.1:5653/db/append/%s:csv", tableName)))
 	}
@@ -45,4 +62,9 @@ func (s *Server) StopProcess() {
 	if s.process != nil && s.process.Running() {
 		s.process.Stop()
 	}
+}
+
+func (s *Server) RestartProcess() {
+	s.StopProcess()
+	s.StartProcess()
 }

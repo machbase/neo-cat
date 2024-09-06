@@ -11,11 +11,12 @@ import SlMenuItem from '@shoelace-style/shoelace/dist/react/menu-item';
 import type SlDrawerElement from '@shoelace-style/shoelace/dist/components/drawer/drawer';
 import type SlDropdownElement from '@shoelace-style/shoelace/dist/components/dropdown/dropdown';
 import type SlMenuItemElement from '@shoelace-style/shoelace/dist/components/menu-item/menu-item';
-import { startControl, stopControl, getConfigIntervalSec, getConfigTableName, parseDuration } from './api/api.ts';
+import { startControl, stopControl, getConfig, getConfigIntervalSec, getConfigTableName, parseDuration } from './api/api.ts';
 import { Logout } from './login.tsx';
 import { GlanceChart } from './chart.tsx';
 import { StatusButton } from './status.tsx';
 import { Settings } from './setup.tsx';
+import { InputSettings } from './setupInputs.tsx';
 
 const PKG_RUNNING = 'running';
 const PKG_STOPPED = 'stopped';
@@ -24,27 +25,70 @@ export function ProcessControl() {
     const [controlStatus, setControlStatus] = useState<string>('unknown');
     const [chartRangeSec, setChartRangeSec] = useState<number>(5 * 60); // charts show the last 5 minutes by default
     const [chartRefreshSec, setChartRefreshSec] = useState<number>(5);
+    const [chartTheme, setChartTheme] = useState<string>('light');
+    const [sThemeIcon, setThemeIcon] = useState<string>('moon');
     const [configuredTableName, setConfiguredTableName] = useState<string>('example');
     const [configuredIntervalSec, setConfiguredIntervalSec] = useState<number>(5);
+    const [sInputProto, setInputProto] = useState<string[]>([]);
+    const [sInputNet, setInputNet] = useState<string[]>([]);
+    const [sInputDiskio, setInputDiskio] = useState<string[]>([]);
+    const [sInputDisk, setInputDisk] = useState<string[]>([]);
 
     const reloadConfig = async () => {
         const intervalSec = await getConfigIntervalSec(chartRefreshSec);
         setChartRefreshSec(intervalSec);
         setConfiguredIntervalSec(intervalSec);
         setConfiguredTableName(await getConfigTableName(configuredTableName));
+        getConfig('in_proto').then((rsp: any) => {
+            if (rsp.success && rsp.data.in_proto) {
+                var protos = [];
+                rsp.data.in_proto.split(',').forEach((proto: string) => {
+                    protos.push(proto.trim());
+                });
+                setInputProto(protos);
+            }
+        });
+        getConfig('in_net').then((rsp: any) => {
+            if (rsp.success && rsp.data.in_net) {
+                var nets = [];
+                rsp.data.in_net.split(',').forEach((net: string) => {
+                    nets.push(net.trim());
+                });
+                setInputNet(nets);
+            }
+        });
+        getConfig('in_disk').then((rsp: any) => {
+            if (rsp.success && rsp.data.in_disk) {
+                var disks = [];
+                rsp.data.in_disk.split(',').forEach((disk: string) => {
+                    disks.push(disk.trim());
+                });
+                setInputDisk(disks);
+            }
+        });
+        getConfig('in_diskio').then((rsp: any) => {
+            if (rsp.success && rsp.data.in_diskio) {
+                var diskios = [];
+                rsp.data.in_diskio.split(',').forEach((diskio: string) => {
+                    diskios.push(diskio.trim());
+                });
+                setInputDiskio(diskios);
+            }
+        });
     }
 
     useEffect(() => {
         reloadConfig();
         const dropdown = document.getElementById('view-menu') as SlDropdownElement;
         dropdown.querySelectorAll('sl-menu-item').forEach((item) => {
-            if (item.value === `${chartRangeSec/60}m`) {
+            if (item.value === `${chartRangeSec / 60}m`) {
                 item.setAttribute('checked', 'true');
             }
         })
         dropdown.addEventListener('sl-select', (event: CustomEvent) => {
             handleView(event);
         });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const updateStatus = (st: string) => {
@@ -112,7 +156,7 @@ export function ProcessControl() {
         }
         setChartRangeSec(newVal);
         setChartRefreshSec(newRefreshSec);
-    }
+    };
 
     const handleSettings = () => {
         const drawer = document.getElementById('settings-drawer') as SlDrawerElement;
@@ -122,15 +166,31 @@ export function ProcessControl() {
         drawer.show();
     };
 
-    const styleGroup: React.CSSProperties = { marginRight: 'var(--sl-spacing-small)' };
+    const handleInputs = () => {
+        const drawer = document.getElementById('inputs-drawer') as SlDrawerElement;
+        drawer.addEventListener('sl-hide', () => {
+        });
+        drawer.show();
+    };
+
+    const handleToggleTheme = () => {
+        const themeIcon = document.getElementById('theme-icon');
+        if (themeIcon && themeIcon.getAttribute('name') === 'moon') {
+            setThemeIcon('sun');
+            document.getElementById('genesis').setAttribute('class', 'sl-theme-dark');
+            setChartTheme('dark');
+        } else if (themeIcon && themeIcon.getAttribute('name') === 'sun') {
+            setThemeIcon('moon');
+            document.getElementById('genesis').setAttribute('class', 'sl-theme-light');
+            setChartTheme('');
+        }
+    };
 
     return (
         <>
             <div style={{ textAlign: 'center' }}>
                 <div style={{ display: 'inline-flex', flexFlow: 'nowrap', alignItems: 'start' }}>
-                    <StatusButton intervalSec={2} statusCallback={(st) => { setControlStatus(st); updateStatus(st) }} />
-                    <span style={{ width: 'var(--sl-spacing-3x-large)' }}></span>
-                    <SlButtonGroup style={styleGroup}>
+                    <SlButtonGroup style={{ marginRight: 'var(--sl-spacing-small)' }}>
                         <SlTooltip content='Start agent'>
                             <SlButton id='btn-start' onClick={handleStart} disabled><SlIcon name='play' slot='prefix'></SlIcon>Start</SlButton>
                         </SlTooltip>
@@ -138,7 +198,7 @@ export function ProcessControl() {
                             <SlButton id='btn-stop' onClick={handleStop} disabled><SlIcon name='stop' slot='prefix'></SlIcon>Stop</SlButton>
                         </SlTooltip>
                     </SlButtonGroup>
-                    <SlButtonGroup style={styleGroup}>
+                    <SlButtonGroup style={{ marginRight: 'var(--sl-spacing-4x-large)' }}>
                         <SlDropdown id='view-menu' style={{ textAlign: 'start' }}>
                             <SlButton slot='trigger' caret><SlIcon name='graph-up' slot='prefix'></SlIcon>View</SlButton>
                             <SlMenu>
@@ -154,22 +214,41 @@ export function ProcessControl() {
                             </SlMenu>
                         </SlDropdown>
                         <SlButton onClick={handleSettings}><SlIcon name='gear' slot='prefix'></SlIcon>Settings</SlButton>
+                        <StatusButton
+                            intervalSec={2}
+                            statusCallback={(st) => { setControlStatus(st); updateStatus(st) }}
+                            onClick={handleInputs}
+                        />
                     </SlButtonGroup>
                     <SlButtonGroup>
+                        <SlButton onClick={handleToggleTheme}><SlIcon id='theme-icon' name={sThemeIcon} slot='prefix'></SlIcon></SlButton>
                         <SlButton onClick={Logout}><SlIcon name='escape' slot='prefix'></SlIcon>Logout</SlButton>
                     </SlButtonGroup>
                 </div>
                 <SlDivider></SlDivider>
                 <div id='control-error' style={{ color: 'red' }} hidden></div>
                 {controlStatus === PKG_RUNNING ?
-                    <div style={{ paddingRight: '20px', paddingBottom: '20px' }}>
-                        <GlanceChart tableName={configuredTableName} rangeSec={chartRangeSec} refreshIntervalSec={chartRefreshSec} />
+                    <div>
+                        <GlanceChart
+                            tableName={configuredTableName}
+                            rangeSec={chartRangeSec}
+                            refreshIntervalSec={chartRefreshSec}
+                            theme={chartTheme}
+                            inProto={sInputProto}
+                            inNets={sInputNet}
+                            inDisks={sInputDisk}
+                            inDiskio={sInputDiskio}
+                        />
                     </div>
-                    : <div>...</div>
+                    :
+                    <div>...</div>
                 }
             </div>
             <SlDrawer label='Settings' id='settings-drawer'>
                 <Settings tableName={configuredTableName} interval={`${configuredIntervalSec}s`} />
+            </SlDrawer>
+            <SlDrawer label='Inputs' id='inputs-drawer'>
+                <InputSettings />
             </SlDrawer>
         </>
     );

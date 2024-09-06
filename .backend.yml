@@ -18,4 +18,4 @@ stderr_log: warn
 
 http_proxy:
   prefix: /api/
-  address: unix://../store/.sock
+  address: unix://../storage/.sock
