@@ -11,7 +11,7 @@ import SlMenuItem from '@shoelace-style/shoelace/dist/react/menu-item';
 import type SlDrawerElement from '@shoelace-style/shoelace/dist/components/drawer/drawer';
 import type SlDropdownElement from '@shoelace-style/shoelace/dist/components/dropdown/dropdown';
 import type SlMenuItemElement from '@shoelace-style/shoelace/dist/components/menu-item/menu-item';
-import { startControl, stopControl, getConfig, getConfigIntervalSec, getConfigTableName, parseDuration } from './api/api.ts';
+import { startControl, stopControl, getConfig, getConfigIntervalSec, getConfigTableName, parseDuration, getConfigTagPrefix } from './api/api.ts';
 import { Logout } from './login.tsx';
 import { GlanceChart } from './chart.tsx';
 import { StatusButton } from './status.tsx';
@@ -28,6 +28,7 @@ export function ProcessControl() {
     const [chartTheme, setChartTheme] = useState<string>('light');
     const [sThemeIcon, setThemeIcon] = useState<string>('moon');
     const [configuredTableName, setConfiguredTableName] = useState<string>('example');
+    const [configuredTagPrefix, setConfiguredTagPrefix] = useState<string>('');
     const [configuredIntervalSec, setConfiguredIntervalSec] = useState<number>(5);
     const [sInputProto, setInputProto] = useState<string[]>([]);
     const [sInputNet, setInputNet] = useState<string[]>([]);
@@ -39,6 +40,7 @@ export function ProcessControl() {
         setChartRefreshSec(intervalSec);
         setConfiguredIntervalSec(intervalSec);
         setConfiguredTableName(await getConfigTableName(configuredTableName));
+        setConfiguredTagPrefix(await getConfigTagPrefix(configuredTagPrefix));
         getConfig('in_proto').then((rsp: any) => {
             if (rsp.success && rsp.data.in_proto) {
                 var protos = [];
@@ -231,6 +233,7 @@ export function ProcessControl() {
                     <div>
                         <GlanceChart
                             tableName={configuredTableName}
+                            tagPrefix={configuredTagPrefix}
                             rangeSec={chartRangeSec}
                             refreshIntervalSec={chartRefreshSec}
                             theme={chartTheme}
@@ -245,9 +248,9 @@ export function ProcessControl() {
                 }
             </div>
             <SlDrawer label='Settings' id='settings-drawer'>
-                <Settings tableName={configuredTableName} interval={`${configuredIntervalSec}s`} />
+                <Settings tableName={configuredTableName} interval={`${configuredIntervalSec}s`} tagPrefix={configuredTagPrefix} />
             </SlDrawer>
-            <SlDrawer label='Inputs' id='inputs-drawer'>
+            <SlDrawer label='Vital Signs' id='inputs-drawer'>
                 <InputSettings />
             </SlDrawer>
         </>

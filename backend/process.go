@@ -20,7 +20,7 @@ func (s *Server) StartProcess() error {
 		}
 	}
 	tableName, _ := s.data.GetConfig("table_name")
-	var tagPrefix string = ""
+	tagPrefix, _ := s.data.GetConfig("tag_prefix")
 
 	if s.process != nil && s.process.Running() {
 		return fmt.Errorf("process is already running")

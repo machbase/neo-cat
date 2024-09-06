@@ -25,6 +25,7 @@ interface TagChartProps {
     title: string
     tags: string[]
     tableName: string
+    tagPrefix: string
     intervalSec: number
     rangeSec: number
     theme: string
@@ -35,7 +36,7 @@ interface TagChartProps {
 
 async function loadTag(props: TagChartProps, chartOptions: any, setChartOptions: (opts: any) => void) {
     for (let i = 0; i < props.tags.length; i++) {
-        const tag: any = await queryTagData(props.tableName, props.tags[i], props.rangeSec);
+        const tag: any = await queryTagData(props.tableName, props.tagPrefix+props.tags[i], props.rangeSec);
         if (tag.success) {
             const opt = { ...chartOptions };
             if (props.yAxis) {
@@ -103,6 +104,7 @@ function TagChart(props: TagChartProps): any {
 
 export function GlanceChart(c: {
     tableName: string
+    tagPrefix: string
     rangeSec: number
     refreshIntervalSec: number
     theme: string
@@ -111,7 +113,7 @@ export function GlanceChart(c: {
     inDisks?: string[]
     inDiskio?: string[]
 }): any {
-    const baseProps: TagChartProps = { tableName: c.tableName, intervalSec: c.refreshIntervalSec, rangeSec: c.rangeSec, theme: c.theme, title: '', tags: [] }
+    const baseProps: TagChartProps = { tableName: c.tableName, tagPrefix: c.tagPrefix, intervalSec: c.refreshIntervalSec, rangeSec: c.rangeSec, theme: c.theme, title: '', tags: [] }
     const cells = [];
 
     const loads: TagChartProps = {...baseProps, title:'System Load', tags:['load1', 'load5', 'load15']};
@@ -124,8 +126,8 @@ export function GlanceChart(c: {
     for (let i = 0; c.inNets && i < c.inNets.length; i++) {
         const nic = c.inNets[i];
         const nicBytes: TagChartProps = { ...baseProps, title: `Network ${nic} Bytes`, tags: [`net.${nic}.bytes_sent`, `net.${nic}.bytes_recv`], aggregator: 'diff' };
-        nicBytes.yAxis = { type: 'value', axisLabel: { formatter: '{value} kB' } };
-        nicBytes.valueCalc = (v: number) => v / (1024);
+        nicBytes.yAxis = { type: 'value', axisLabel: { formatter: '{value} MB' } };
+        nicBytes.valueCalc = (v: number) => v / (1024*1024);
         const nicPkt: TagChartProps = { ...baseProps, title: `Network ${nic} Packets`, tags: [`net.${nic}.packets_sent`, `net.${nic}.packets_recv`], aggregator: 'diff' };
         const nicDrop: TagChartProps = { ...baseProps, title: `Network ${nic} Drops`, tags: [`net.${nic}.drop_out`, `net.${nic}.drop_in`], aggregator: 'diff' };
         cells.push(<TagChart key={`net.${nic}.bytes`} {...nicBytes} />);
@@ -159,9 +161,9 @@ export function GlanceChart(c: {
         cells.push(<TagChart key={disk + '.rw_bytes'} {...rwBytes} />);
         cells.push(<TagChart key={disk + '.rw_time'} {...rwTime} />);
     }
-    cells.push(<TagChart key='host_procs' tableName={c.tableName} intervalSec={c.refreshIntervalSec} rangeSec={c.rangeSec} title='Host Processes' tags={['host.procs']} theme={c.theme} />)
+    cells.push(<TagChart key='host_procs' tableName={c.tableName} tagPrefix={c.tagPrefix} intervalSec={c.refreshIntervalSec} rangeSec={c.rangeSec} title='Host Processes' tags={['host.procs']} theme={c.theme} />)
     return (
-        <div style={{ display: 'grid', gridGap: '10px', gridRowGap: '50px', gridTemplateColumns: 'repeat(auto-fit, minmax(min(400px, 100%), max(400px, 100%/5))', flexFlow: 'wrap' }}>
+        <div style={{ display: 'grid', gridGap: '20px', gridRowGap: '20px', gridTemplateColumns: 'repeat(auto-fit, minmax(min(400px, 100%), max(400px, 100%/5))', flexFlow: 'wrap' }}>
             {cells}
         </div>
     )

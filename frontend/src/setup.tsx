@@ -161,6 +161,7 @@ function StageUser({ callback }: { callback: (username: string, password: string
 
 export interface BackendConfig {
     tableName: string;
+    tagPrefix: string;
     interval: string;
 };
 
@@ -170,7 +171,7 @@ export function StageBackendConfig({ callback }: { callback: (conf: BackendConfi
     );
 }
 
-export function Settings(pref: { tableName: string, interval: string }): any {
+export function Settings(pref: { tableName: string, interval: string, tagPrefix: string }): any {
     const onUpdate = async (bc: BackendConfig) => {
         if (bc.tableName.length > 0 && bc.tableName !== pref.tableName) {
             const rspCreTable: any = await createTable(bc.tableName);
@@ -183,6 +184,12 @@ export function Settings(pref: { tableName: string, interval: string }): any {
                 console.log("ERROR", rspTableName.reason)
             }
         }
+        if (bc.tagPrefix !== pref.tagPrefix) {
+            const rspTagPrefix: any = await setConfig('tag_prefix', bc.tagPrefix);
+            if (!rspTagPrefix.success) {
+                console.log("ERROR", rspTagPrefix.reason)
+            }
+        }
         if (bc.interval !== pref.interval) {
             const rspInterval: any = await setConfig('interval', bc.interval);
             if (!rspInterval.success) {
@@ -192,22 +199,24 @@ export function Settings(pref: { tableName: string, interval: string }): any {
     }
     return (
         <>
-            <FormSettings tableName={pref.tableName} interval={pref.interval} submitText='Update' callback={onUpdate}></FormSettings>
+            <FormSettings tableName={pref.tableName} interval={pref.interval} tagPrefix={pref.tagPrefix} submitText='Update' callback={onUpdate}></FormSettings>
         </>
     );
 }
 
-export function FormSettings(pref: { tableName?: string, interval?: string, submitText?: string, callback: (conf: BackendConfig) => void }) {
+export function FormSettings(pref: { tableName?: string, interval?: string, tagPrefix?: string, submitText?: string, callback: (conf: BackendConfig) => void }) {
     const [btnLabel, setBtnLabel] = useState<string>('OK');
 
     useEffect(() => {
         const form = document.getElementById('destination-form');
 
-        if (pref.tableName) {
-            const inputTableName = form.getElementsByClassName('settings-table-name')[0] as SlInputElement
-            inputTableName.value = pref.tableName;
-        }
-        const selectInterval = form.getElementsByClassName('settings-interval')[0] as SlSelectElement
+        const inputTableName = document.getElementById('table-name') as SlInputElement
+        inputTableName.value = pref.tableName ? pref.tableName : '';
+
+        const inputTagPrefix = document.getElementById('tag-prefix') as SlInputElement
+        inputTagPrefix.value = pref.tagPrefix ? pref.tagPrefix : '';
+
+        const selectInterval = document.getElementById('interval') as SlSelectElement
         selectInterval.value = pref.interval ? pref.interval : '10s';
         if (pref.submitText) {
             setBtnLabel(pref.submitText);
@@ -216,6 +225,7 @@ export function FormSettings(pref: { tableName?: string, interval?: string, subm
         form.addEventListener('submit', (event) => {
             event.preventDefault();
             const tableName = (document.getElementById('table-name') as SlInputElement).value;
+            const tagPrefix = (document.getElementById('tag-prefix') as SlInputElement).value;
             const interval = (document.getElementById('interval') as SlSelectElement).value as string;
             const tableNameError = document.getElementById('table-name-error')
             if (tableName === '') {
@@ -225,7 +235,7 @@ export function FormSettings(pref: { tableName?: string, interval?: string, subm
             } else {
                 tableNameError.hidden = true;
             }
-            var conf: BackendConfig = { tableName: tableName, interval: interval }
+            var conf: BackendConfig = { tableName: tableName, tagPrefix: tagPrefix, interval: interval }
             pref.callback(conf);
         });
     }, [pref, pref.tableName, pref.interval]);
@@ -236,16 +246,21 @@ export function FormSettings(pref: { tableName?: string, interval?: string, subm
                 label='Table name'
                 value=''
                 type='text'
-                className='settings-table-name'
                 clearable />
             <div id="table-name-error" style={{ color: 'red' }} hidden></div>
+            <br />
+            <SlInput
+                id='tag-prefix'
+                label='Tag prefix'
+                value=''
+                type='text'
+                clearable
+            />
             <br />
             <SlSelect
                 id='interval'
                 label='Interval'
-                className='settings-interval'
                 value='10s'>
-                <SlOption value="1s">1 sec.</SlOption>
                 <SlOption value="3s">3 sec.</SlOption>
                 <SlOption value="5s">5 sec.</SlOption>
                 <SlOption value="10s">10 sec.</SlOption>

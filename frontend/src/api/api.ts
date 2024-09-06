@@ -98,6 +98,15 @@ export const getConfigTableName = async (defaultTableName: string): Promise<stri
     }
 }
 
+export const getConfigTagPrefix = async (defaultTagPrefix: string): Promise<string> => {
+    const rspTagPrefix: any = await getConfig('tag_prefix');
+    if (rspTagPrefix.success) {
+        return rspTagPrefix.data.tag_prefix;
+    } else {
+        return defaultTagPrefix;
+    }
+}
+
 // backend: control/start
 export const startControl = async () => {
     return request({
@@ -157,5 +166,13 @@ export const queryTagData = async (table: string, tag: string, durationSec: numb
             timeformat: 'ms',
             transpose: false,
         },
+    });
+}
+
+export const getMachine = async(category: 'protocol'|'partition'|'diskio'|'net') => {
+    return request({
+        method: 'GET',
+        baseURL: '/web/apps/neo-cat',
+        url: `/api/machine/${category}`,
     });
 }
