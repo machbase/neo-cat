@@ -120,13 +120,23 @@ func (s *Server) router() *gin.Engine {
 	}()
 
 	r := gin.New()
-	r.GET("/web/api/check", s.getCheck)
 	group := r.Group("/web/apps/neo-cat/api")
+	group.POST("/login", s.postLogin)
+	group.GET("/ping", s.ping)
+	group.Use(func(ctx *gin.Context) {
+		cnt, _ := s.data.CountUsers()
+		if cnt == 0 {
+			return
+		}
+		authHdr := ctx.GetHeader("Authorization")
+		if !s.verifyToken(authHdr) {
+			ctx.String(http.StatusUnauthorized, "")
+			ctx.Abort()
+		}
+	})
 	group.GET("/count_users", s.getCountUsers)
 	group.POST("/users", s.postUsers)
 	group.DELETE("/users/:username", s.deleteUser)
-	group.POST("/login", s.postLogin)
-	group.GET("/ping", s.ping)
 	group.GET("/machine/protocol", s.getMachineProtocol)
 	group.GET("/machine/partition", s.getMachineDiskPartition)
 	group.GET("/machine/diskio", s.getMachineDiskIO)
@@ -155,8 +165,16 @@ func (s *Server) router() *gin.Engine {
 	return r
 }
 
-func (s *Server) getCheck(c *gin.Context) {
-	c.JSON(200, gin.H{"message": "ok"})
+func (s *Server) issueToken(username string) string {
+	return "dummy-" + username
+}
+
+func (s *Server) verifyToken(tok string) bool {
+	// TODO: verify token
+	if tok != "" {
+		return true
+	}
+	return true
 }
 
 func (s *Server) getCountUsers(c *gin.Context) {
@@ -210,8 +228,9 @@ func (s *Server) postLogin(c *gin.Context) {
 		return
 	}
 	if s.data.VerifyUserPassword(req.Username, req.Password) {
+		tok := s.issueToken(req.Username)
 		rsp.Success, rsp.Reason = true, "success"
-		rsp.Data = gin.H{"token": "dummy"}
+		rsp.Data = gin.H{"token": tok}
 		c.JSON(200, rsp)
 	} else {
 		rsp.Reason = "Bad username or password"

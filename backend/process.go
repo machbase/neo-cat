@@ -30,6 +30,7 @@ func (s *Server) StartProcess() error {
 		pstag.WithInterval(interval),
 		pstag.WithTagPrefix(tagPrefix),
 	)
+	s.process.AddInput(plugin.NewInlet("in-neo-statz", "http://localhost:5654/db/statz"))
 	s.process.AddInput(plugin.NewInlet("in-load"))
 	s.process.AddInput(plugin.NewInlet("in-cpu"))
 	s.process.AddInput(plugin.NewInlet("in-mem"))

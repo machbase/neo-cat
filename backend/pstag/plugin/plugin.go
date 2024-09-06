@@ -147,11 +147,13 @@ func init() {
 			"                        wildcard(*) is allowed (e.g. eth0,en0,enp*)")
 	RegisterInletWith("in-proto", NewInletFuncArgs(internal.ProtoInput), "",
 		"--in-proto <proto>      Report network I/O by protocol, comma(,) separated\n"+
-			"                        Availables: ip,icmp,icmpmsg,tcp,udp,udplite")
+			"                        Available: ip,icmp,icmpmsg,tcp,udp,udplite")
 	RegisterInletWith("in-sensor", NewInletFunc(internal.SensorInput), false,
 		"--in-sensor             Report sensors (temperature, fan speed, etc.)")
 	RegisterInletWith("in-host", NewInletFunc(internal.HostInput), false,
 		"--in-host               Report host information")
+	RegisterInletWith("in-neo-statz", NewInletFuncArgs(internal.NeoStatzInput), false,
+		"--in-neo-statz          Report machbase-neo statz")
 	// outputs
 	RegisterOutletWith("out-file", internal.NewFileOutlet, "",
 		"--out-file <path>       Report output to the file")
