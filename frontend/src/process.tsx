@@ -3,17 +3,19 @@ import SlButton from '@shoelace-style/shoelace/dist/react/button';
 import SlButtonGroup from '@shoelace-style/shoelace/dist/react/button-group';
 import SlIcon from '@shoelace-style/shoelace/dist/react/icon';
 import SlTooltip from '@shoelace-style/shoelace/dist/react/tooltip';
-import SlDivider from '@shoelace-style/shoelace/dist/react/divider';
 import SlDrawer from '@shoelace-style/shoelace/dist/react/drawer';
 import SlDropdown from '@shoelace-style/shoelace/dist/react/dropdown';
 import SlMenu from '@shoelace-style/shoelace/dist/react/menu';
 import SlMenuItem from '@shoelace-style/shoelace/dist/react/menu-item';
+import SlTabGroup from '@shoelace-style/shoelace/dist/react/tab-group';
+import SlTab from '@shoelace-style/shoelace/dist/react/tab';
+import SlTabPanel from '@shoelace-style/shoelace/dist/react/tab-panel';
 import type SlDrawerElement from '@shoelace-style/shoelace/dist/components/drawer/drawer';
 import type SlDropdownElement from '@shoelace-style/shoelace/dist/components/dropdown/dropdown';
 import type SlMenuItemElement from '@shoelace-style/shoelace/dist/components/menu-item/menu-item';
-import { startControl, stopControl, getConfig, getConfigIntervalSec, getConfigTableName, parseDuration, getConfigTagPrefix } from './api/api.ts';
+import { startControl, stopControl, getConfig, getConfigIntervalSec, getConfigTableName, parseDuration, getConfigTagPrefix, getConfigNeoStatzAddr } from './api/api.ts';
 import { Logout } from './login.tsx';
-import { GlanceChart } from './chart.tsx';
+import { SystemChart, NeoChart } from './chart.tsx';
 import { StatusButton } from './status.tsx';
 import { Settings } from './setup.tsx';
 import { InputSettings } from './setupInputs.tsx';
@@ -29,6 +31,7 @@ export function ProcessControl() {
     const [sThemeIcon, setThemeIcon] = useState<string>('moon');
     const [configuredTableName, setConfiguredTableName] = useState<string>('example');
     const [configuredTagPrefix, setConfiguredTagPrefix] = useState<string>('');
+    const [configuredNeoStatzAddr, setConfiguredNeoStatzAddr] = useState<string>('http://127.0.0.1:5654/db/statz');
     const [configuredIntervalSec, setConfiguredIntervalSec] = useState<number>(5);
     const [sInputProto, setInputProto] = useState<string[]>([]);
     const [sInputNet, setInputNet] = useState<string[]>([]);
@@ -41,6 +44,8 @@ export function ProcessControl() {
         setConfiguredIntervalSec(intervalSec);
         setConfiguredTableName(await getConfigTableName(configuredTableName));
         setConfiguredTagPrefix(await getConfigTagPrefix(configuredTagPrefix));
+        setConfiguredNeoStatzAddr(await getConfigNeoStatzAddr(configuredNeoStatzAddr));
+
         getConfig('in_proto').then((rsp: any) => {
             if (rsp.success && rsp.data.in_proto) {
                 var protos = [];
@@ -49,7 +54,7 @@ export function ProcessControl() {
                 });
                 setInputProto(protos);
             }
-        });
+        }).catch((err) => { });
         getConfig('in_net').then((rsp: any) => {
             if (rsp.success && rsp.data.in_net) {
                 var nets = [];
@@ -58,7 +63,7 @@ export function ProcessControl() {
                 });
                 setInputNet(nets);
             }
-        });
+        }).catch((err) => { });
         getConfig('in_disk').then((rsp: any) => {
             if (rsp.success && rsp.data.in_disk) {
                 var disks = [];
@@ -67,7 +72,7 @@ export function ProcessControl() {
                 });
                 setInputDisk(disks);
             }
-        });
+        }).catch((err) => { });
         getConfig('in_diskio').then((rsp: any) => {
             if (rsp.success && rsp.data.in_diskio) {
                 var diskios = [];
@@ -76,7 +81,7 @@ export function ProcessControl() {
                 });
                 setInputDiskio(diskios);
             }
-        });
+        }).catch((err) => { });
     }
 
     useEffect(() => {
@@ -161,17 +166,18 @@ export function ProcessControl() {
     };
 
     const handleSettings = () => {
+        reloadConfig();
         const drawer = document.getElementById('settings-drawer') as SlDrawerElement;
-        drawer.addEventListener('sl-hide', () => {
-            reloadConfig();
-        });
+        // drawer.addEventListener('sl-show', () => {
+        //     reloadConfig();
+        // });
         drawer.show();
     };
 
     const handleInputs = () => {
         const drawer = document.getElementById('inputs-drawer') as SlDrawerElement;
-        drawer.addEventListener('sl-hide', () => {
-        });
+        // drawer.addEventListener('sl-hide', () => {
+        // });
         drawer.show();
     };
 
@@ -227,28 +233,45 @@ export function ProcessControl() {
                         <SlButton onClick={Logout}><SlIcon name='escape' slot='prefix'></SlIcon>Logout</SlButton>
                     </SlButtonGroup>
                 </div>
-                <SlDivider></SlDivider>
                 <div id='control-error' style={{ color: 'red' }} hidden></div>
                 {controlStatus === PKG_RUNNING ?
-                    <div>
-                        <GlanceChart
-                            tableName={configuredTableName}
-                            tagPrefix={configuredTagPrefix}
-                            rangeSec={chartRangeSec}
-                            refreshIntervalSec={chartRefreshSec}
-                            theme={chartTheme}
-                            inProto={sInputProto}
-                            inNets={sInputNet}
-                            inDisks={sInputDisk}
-                            inDiskio={sInputDiskio}
-                        />
-                    </div>
+                    <SlTabGroup>
+                        <SlTab slot="nav" panel="system">System</SlTab>
+                        <SlTab slot="nav" panel="machbase">Machbase</SlTab>
+                        <SlTabPanel name="system">
+                            <SystemChart
+                                tableName={configuredTableName}
+                                tagPrefix={configuredTagPrefix}
+                                rangeSec={chartRangeSec}
+                                refreshIntervalSec={chartRefreshSec}
+                                theme={chartTheme}
+                                inProto={sInputProto}
+                                inNets={sInputNet}
+                                inDisks={sInputDisk}
+                                inDiskio={sInputDiskio}
+                            />
+                        </SlTabPanel>
+                        <SlTabPanel name="machbase">
+                            <NeoChart
+                                tableName={configuredTableName}
+                                tagPrefix={configuredTagPrefix}
+                                rangeSec={chartRangeSec}
+                                refreshIntervalSec={chartRefreshSec}
+                                theme={chartTheme}
+                            />
+                        </SlTabPanel>
+                    </SlTabGroup>
                     :
                     <div>...</div>
                 }
             </div>
             <SlDrawer label='Settings' id='settings-drawer'>
-                <Settings tableName={configuredTableName} interval={`${configuredIntervalSec}s`} tagPrefix={configuredTagPrefix} />
+                <Settings
+                    tableName={configuredTableName}
+                    interval={`${configuredIntervalSec}s`}
+                    tagPrefix={configuredTagPrefix}
+                    neoStatzAddr={configuredNeoStatzAddr}
+                />
             </SlDrawer>
             <SlDrawer label='Vital Signs' id='inputs-drawer'>
                 <InputSettings />

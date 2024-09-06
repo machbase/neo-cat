@@ -14,18 +14,41 @@ export function Setup() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [tableName, setTableName] = useState('');
-    const [interval, setInterval] = useState('10s');
+    const [tagPrefix, setTagPrefix] = useState('neo_');
+    const [neoStatzAddr, setNeoStatzAddr] = useState('http://127.0.0.1:5654/db/statz');
+    const [interval, setInterval] = useState('30s');
     switch (stage) {
         case 'user':
-            return <StageUser callback={(username, password) => { setUsername(username); setPassword(password); setStage('destination'); }} />;
+            return (
+                <StageUser
+                    callback={(username, password) => {
+                        setUsername(username);
+                        setPassword(password);
+                        setStage('destination');
+                    }}>
+                </StageUser>
+            );
         case 'destination':
-            return <StageBackendConfig callback={(c: BackendConfig) => { setTableName(c.tableName); setInterval(c.interval); setStage('fin') }} />;
+            return (
+                <FormSettings tagPrefix={tagPrefix} neoStatzAddr={neoStatzAddr} interval={interval} submitText='Next'
+                    callback={
+                        (c: BackendConfig) => {
+                            setTableName(c.tableName);
+                            setNeoStatzAddr(c.neoStatzAddr);
+                            setTagPrefix(c.tagPrefix);
+                            setInterval(c.interval);
+                            setStage('fin');
+                        }} >
+                </FormSettings>
+            );
         case 'fin':
-            return <StageFin username={username} password={password} tableName={tableName} interval={interval} />;
+            return (
+                <StageFin username={username} password={password} tableName={tableName} tagPrefix={tagPrefix} neoStatzAddr={neoStatzAddr} interval={interval} />
+            );
     }
 }
 
-function StageFin(conf: { username: string, password: string, tableName: string, interval: string }) {
+function StageFin(conf: { username: string, password: string, tagPrefix: string, tableName: string, neoStatzAddr: string, interval: string }) {
     const saveSettings = async () => {
         var errCount = 0;
         const rspCreTable: any = await createTable(conf.tableName);
@@ -41,6 +64,23 @@ function StageFin(conf: { username: string, password: string, tableName: string,
             errCount++;
             document.getElementById('checkTableName')!.setAttribute('name', 'exclamation-circle');
         }
+
+        const rspNeoStatzAddr: any = await setConfig('neo_statz_addr', conf.neoStatzAddr);
+        if (rspNeoStatzAddr.success) {
+            document.getElementById('checkStatzAddr')!.setAttribute('name', 'check2-circle');
+        } else {
+            errCount++;
+            document.getElementById('checkStatzAddr')!.setAttribute('name', 'exclamation-circle');
+        }
+
+        const rspTagPrefix: any = await setConfig('tag_prefix', conf.tagPrefix);
+        if (rspTagPrefix.success) {
+            document.getElementById('checkTagPrefix')!.setAttribute('name', 'check2-circle');
+        } else {
+            errCount++;
+            document.getElementById('checkTagPrefix')!.setAttribute('name', 'exclamation-circle');
+        }
+
         const rspInterval: any = await setConfig('interval', conf.interval);
         if (rspInterval.success) {
             document.getElementById('checkInterval')!.setAttribute('name', 'check2-circle');
@@ -77,6 +117,8 @@ function StageFin(conf: { username: string, password: string, tableName: string,
                 <br />
                 <SlIcon id="checkUser" name="hourglass-split"></SlIcon> User: {conf.username}<br />
                 <SlIcon id="checkTableName" name="hourglass-split"></SlIcon> Table: {conf.tableName.toUpperCase()}<br />
+                <SlIcon id="checkTagPrefix" name="hourglass-split"></SlIcon> Tag Prefix: {conf.tagPrefix}<br />
+                <SlIcon id="checkStatzAddr" name="hourglass-split"></SlIcon> Neo Statz Addr: {conf.neoStatzAddr}<br />
                 <SlIcon id="checkInterval" name="hourglass-split"></SlIcon> Interval: {conf.interval}
             </SlAlert>
             <br />
@@ -163,15 +205,11 @@ export interface BackendConfig {
     tableName: string;
     tagPrefix: string;
     interval: string;
+    neoStatzAddr: string;
 };
 
-export function StageBackendConfig({ callback }: { callback: (conf: BackendConfig) => void }) {
-    return (
-        <FormSettings submitText='Next' callback={callback} ></FormSettings>
-    );
-}
-
-export function Settings(pref: { tableName: string, interval: string, tagPrefix: string }): any {
+export function Settings(pref: { tableName: string, interval: string, tagPrefix: string, neoStatzAddr: string }): any {
+    console.log(pref);
     const onUpdate = async (bc: BackendConfig) => {
         if (bc.tableName.length > 0 && bc.tableName !== pref.tableName) {
             const rspCreTable: any = await createTable(bc.tableName);
@@ -190,6 +228,12 @@ export function Settings(pref: { tableName: string, interval: string, tagPrefix:
                 console.log("ERROR", rspTagPrefix.reason)
             }
         }
+        if (bc.neoStatzAddr !== pref.neoStatzAddr) {
+            const rspNeoStatzAddr: any = await setConfig('neo_statz_addr', bc.neoStatzAddr);
+            if (!rspNeoStatzAddr.success) {
+                console.log("ERROR", rspNeoStatzAddr.reason)
+            }
+        }
         if (bc.interval !== pref.interval) {
             const rspInterval: any = await setConfig('interval', bc.interval);
             if (!rspInterval.success) {
@@ -199,14 +243,20 @@ export function Settings(pref: { tableName: string, interval: string, tagPrefix:
     }
     return (
         <>
-            <FormSettings tableName={pref.tableName} interval={pref.interval} tagPrefix={pref.tagPrefix} submitText='Update' callback={onUpdate}></FormSettings>
+            <FormSettings
+                tableName={pref.tableName}
+                interval={pref.interval}
+                tagPrefix={pref.tagPrefix}
+                neoStatzAddr={pref.neoStatzAddr}
+                submitText='Update'
+                callback={onUpdate}
+            ></FormSettings>
         </>
     );
 }
 
-export function FormSettings(pref: { tableName?: string, interval?: string, tagPrefix?: string, submitText?: string, callback: (conf: BackendConfig) => void }) {
+export function FormSettings(pref: { tableName?: string, interval?: string, tagPrefix?: string, neoStatzAddr?: string, submitText?: string, callback: (conf: BackendConfig) => void }) {
     const [btnLabel, setBtnLabel] = useState<string>('OK');
-
     useEffect(() => {
         const form = document.getElementById('destination-form');
 
@@ -216,8 +266,11 @@ export function FormSettings(pref: { tableName?: string, interval?: string, tagP
         const inputTagPrefix = document.getElementById('tag-prefix') as SlInputElement
         inputTagPrefix.value = pref.tagPrefix ? pref.tagPrefix : '';
 
+        const inputNeoStatzAddr = document.getElementById('neo-statz-addr') as SlInputElement
+        inputNeoStatzAddr.value = pref.neoStatzAddr ? pref.neoStatzAddr : '';
+
         const selectInterval = document.getElementById('interval') as SlSelectElement
-        selectInterval.value = pref.interval ? pref.interval : '10s';
+        selectInterval.value = pref.interval ? pref.interval : '30s';
         if (pref.submitText) {
             setBtnLabel(pref.submitText);
         }
@@ -227,6 +280,8 @@ export function FormSettings(pref: { tableName?: string, interval?: string, tagP
             const tableName = (document.getElementById('table-name') as SlInputElement).value;
             const tagPrefix = (document.getElementById('tag-prefix') as SlInputElement).value;
             const interval = (document.getElementById('interval') as SlSelectElement).value as string;
+            const neoStatzAddr = (document.getElementById('neo-statz-addr') as SlInputElement).value;
+
             const tableNameError = document.getElementById('table-name-error')
             if (tableName === '') {
                 tableNameError.textContent = 'Table name must not be empty';
@@ -235,16 +290,16 @@ export function FormSettings(pref: { tableName?: string, interval?: string, tagP
             } else {
                 tableNameError.hidden = true;
             }
-            var conf: BackendConfig = { tableName: tableName, tagPrefix: tagPrefix, interval: interval }
+            var conf: BackendConfig = { tableName: tableName, tagPrefix: tagPrefix, interval: interval, neoStatzAddr: neoStatzAddr }
             pref.callback(conf);
         });
-    }, [pref, pref.tableName, pref.interval]);
+    }, [pref]);
     return (
-        <form id='destination-form' >
+        <form id='destination-form'>
             <SlInput
                 id='table-name'
                 label='Table name'
-                value=''
+                value={pref.tableName ? pref.tableName : ''}
                 type='text'
                 clearable />
             <div id="table-name-error" style={{ color: 'red' }} hidden></div>
@@ -252,7 +307,15 @@ export function FormSettings(pref: { tableName?: string, interval?: string, tagP
             <SlInput
                 id='tag-prefix'
                 label='Tag prefix'
-                value=''
+                value={pref.tagPrefix ? pref.tagPrefix : ''}
+                type='text'
+                clearable
+            />
+            <br />
+            <SlInput
+                id='neo-statz-addr'
+                label='Neo statz address'
+                value={pref.neoStatzAddr ? pref.neoStatzAddr : ''}
                 type='text'
                 clearable
             />
@@ -260,7 +323,7 @@ export function FormSettings(pref: { tableName?: string, interval?: string, tagP
             <SlSelect
                 id='interval'
                 label='Interval'
-                value='10s'>
+                value={pref.interval ? pref.interval : '30s'}>
                 <SlOption value="3s">3 sec.</SlOption>
                 <SlOption value="5s">5 sec.</SlOption>
                 <SlOption value="10s">10 sec.</SlOption>
@@ -269,7 +332,7 @@ export function FormSettings(pref: { tableName?: string, interval?: string, tagP
                 <SlOption value="60s">60 sec.</SlOption>
             </SlSelect>
             <br />
-            <SlButton type="submit" variant='primary' >{btnLabel}</SlButton>
+            <SlButton type="submit" variant='primary'>{btnLabel}</SlButton>
         </form>
     );
 }

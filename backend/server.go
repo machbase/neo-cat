@@ -282,9 +282,7 @@ func (s *Server) getConfig(c *gin.Context) {
 	key := strings.ToLower(c.Param("key"))
 	ret, err := s.data.GetConfig(key)
 	if err != nil {
-		rsp.Reason = err.Error()
-		c.JSON(404, rsp)
-		return
+		ret = ""
 	}
 	rsp.Success, rsp.Reason = true, "success"
 	rsp.Data = gin.H{key: ret}

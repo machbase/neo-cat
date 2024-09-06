@@ -12,6 +12,7 @@ machbase-neo's *watch-cat*, rather than *watch-dog*.
 - [x] Disk Usage
 - [x] Disk IO
 - [ ] Network Protocol
+- [x] machbase-neo statz
 
 ## Screenshot
 

@@ -21,6 +21,10 @@ func (s *Server) StartProcess() error {
 	}
 	tableName, _ := s.data.GetConfig("table_name")
 	tagPrefix, _ := s.data.GetConfig("tag_prefix")
+	neoStatz, _ := s.data.GetConfig("neo_statz_addr")
+	if neoStatz == "" {
+		neoStatz = "http://127.0.0.1:5654/db/statz"
+	}
 
 	if s.process != nil && s.process.Running() {
 		return fmt.Errorf("process is already running")
@@ -30,7 +34,7 @@ func (s *Server) StartProcess() error {
 		pstag.WithInterval(interval),
 		pstag.WithTagPrefix(tagPrefix),
 	)
-	s.process.AddInput(plugin.NewInlet("in-neo-statz", "http://localhost:5654/db/statz"))
+	s.process.AddInput(plugin.NewInlet("in-neo-statz", neoStatz))
 	s.process.AddInput(plugin.NewInlet("in-load"))
 	s.process.AddInput(plugin.NewInlet("in-cpu"))
 	s.process.AddInput(plugin.NewInlet("in-mem"))
