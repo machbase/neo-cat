@@ -8,7 +8,7 @@ export const createTable = async (tableName: string) => {
                 `)`
     return request({
         method: 'GET',
-        baseURL: ``,
+        baseURL: null,
         url: `/db/query`,
         params: {
             q: sql,

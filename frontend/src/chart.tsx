@@ -7,7 +7,7 @@ function chartOptionTemplate(title: string, series: string[]): any {
     const opts = {
         title: { text: `${title}`, left: 'center' },
         legend: { show: true, bottom: '0px' },
-        grid: { bottom: '25px', top: '35px', containLabel: true, left: '0px', right: '0px' },
+        grid: { bottom: '25px', top: '35px', containLabel: true, left: '2px', right: '6px' },
         xAxis: { type: 'time', minInterval: 60000 },
         yAxis: { type: 'value' },
         tooltip: { trigger: "axis" },
@@ -181,7 +181,7 @@ export function NeoChart(c: {
             <TagChart tableName={c.tableName} tagPrefix={c.tagPrefix} intervalSec={c.refreshIntervalSec} rangeSec={c.rangeSec} theme={c.theme} title='MQTT Bytes' tags={['statz_mqtt_bytes_sent', 'statz_mqtt_bytes_recv']} aggregator='diff' />
             <TagChart tableName={c.tableName} tagPrefix={c.tagPrefix} intervalSec={c.refreshIntervalSec} rangeSec={c.rangeSec} theme={c.theme} title='MQTT Packets' tags={['statz_mqtt_packets_sent', 'statz_mqtt_packets_recv']} aggregator='diff' />
             <TagChart tableName={c.tableName} tagPrefix={c.tagPrefix} intervalSec={c.refreshIntervalSec} rangeSec={c.rangeSec} theme={c.theme} title='MQTT Messages' tags={['statz_mqtt_messages_sent', 'statz_mqtt_messages_recv']} aggregator='diff' />
-            <TagChart tableName={c.tableName} tagPrefix={c.tagPrefix} intervalSec={c.refreshIntervalSec} rangeSec={c.rangeSec} theme={c.theme} title='MQTT Messages' tags={['statz_mqtt_messages_sent', 'statz_mqtt_messages_recv']} aggregator='diff' />
+            <TagChart tableName={c.tableName} tagPrefix={c.tagPrefix} intervalSec={c.refreshIntervalSec} rangeSec={c.rangeSec} theme={c.theme} title='MQTT Clients' tags={['statz_mqtt_clients_total']} />
             <TagChart tableName={c.tableName} tagPrefix={c.tagPrefix} intervalSec={c.refreshIntervalSec} rangeSec={c.rangeSec} theme={c.theme} title='MQTT Subscriptions' tags={['statz_mqtt_subscriptions']} />
 
             <TagChart tableName={c.tableName} tagPrefix={c.tagPrefix} intervalSec={c.refreshIntervalSec} rangeSec={c.rangeSec} theme={c.theme} title='DB Conns' tags={['statz_sess_raw_conns', 'statz_sess_conns']} />

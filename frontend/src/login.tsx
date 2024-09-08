@@ -35,7 +35,7 @@ export function LoginForm({ callback }: { callback: (token: string) => void }) {
         });
     }, []);
     return (
-        <div style={{borderRadius: "10px", maxWidth:'300px', border:'2px solid var(--sl-color-primary-500)', padding:'40px'}}>
+        <div style={{borderRadius: "10px", maxWidth:'300px', border:'2px solid var(--sl-color-primary-500)', padding:'40px', position:'absolute', top:'30%', left:'50%', transform:'translate(-50%, -50%)'}}>
             <form id='login-form' >
                 <SlInput
                     id='username'

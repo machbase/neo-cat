@@ -148,10 +148,12 @@ func (s *Server) router() *gin.Engine {
 	group.GET("/control/:act", s.getControl)
 	if s.debugMode {
 		// route to machbase-neo for development
-		neoWeb, _ := url.Parse("http://localhost:5654")
-		rp := httputil.NewSingleHostReverseProxy(neoWeb)
+		if dbProxy == nil {
+			neoWeb, _ := url.Parse("http://localhost:5654")
+			dbProxy = httputil.NewSingleHostReverseProxy(neoWeb)
+		}
 		r.Any("/db/*path", func(c *gin.Context) {
-			rp.ServeHTTP(c.Writer, c.Request)
+			dbProxy.ServeHTTP(c.Writer, c.Request)
 		})
 	}
 	r.NoRoute(func(c *gin.Context) {
@@ -164,6 +166,8 @@ func (s *Server) router() *gin.Engine {
 	})
 	return r
 }
+
+var dbProxy *httputil.ReverseProxy
 
 func (s *Server) issueToken(username string) string {
 	return "dummy-" + username
@@ -181,13 +185,13 @@ func (s *Server) getCountUsers(c *gin.Context) {
 	rsp := &Response{}
 	cnt, err := s.data.CountUsers()
 	if err != nil {
-		rsp.Reason = err.Error()
-		c.JSON(500, rsp)
+		rsp.Success, rsp.Reason = true, err.Error()
+		rsp.Data = gin.H{"count": 0}
 	} else {
 		rsp.Success, rsp.Reason = true, "success"
 		rsp.Data = gin.H{"count": cnt}
-		c.JSON(200, rsp)
 	}
+	c.JSON(200, rsp)
 }
 
 func (s *Server) postUsers(c *gin.Context) {
