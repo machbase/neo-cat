@@ -149,10 +149,14 @@ func (s *Server) router() *gin.Engine {
 	if s.debugMode {
 		// route to machbase-neo for development
 		if dbProxy == nil {
-			neoWeb, _ := url.Parse("http://localhost:5654")
-			dbProxy = httputil.NewSingleHostReverseProxy(neoWeb)
+			dbUrl, _ = url.Parse("http://localhost:5654")
+			dbProxy = httputil.NewSingleHostReverseProxy(dbUrl)
 		}
 		r.Any("/db/*path", func(c *gin.Context) {
+			c.Request.URL.Host = dbUrl.Host
+			c.Request.URL.Scheme = dbUrl.Scheme
+			c.Request.Header.Set("X-Forwarded-Host", c.Request.Host)
+			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 			dbProxy.ServeHTTP(c.Writer, c.Request)
 		})
 	}
@@ -167,6 +171,7 @@ func (s *Server) router() *gin.Engine {
 	return r
 }
 
+var dbUrl *url.URL
 var dbProxy *httputil.ReverseProxy
 
 func (s *Server) issueToken(username string) string {
