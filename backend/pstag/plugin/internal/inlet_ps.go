@@ -20,7 +20,7 @@ import (
 func CpuInput() ([]*report.Record, error) {
 	v, err := cpu.Percent(0, false)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("inlet cpu, %s", err)
 	}
 	ret := []*report.Record{}
 	for _, p := range v {
@@ -32,7 +32,7 @@ func CpuInput() ([]*report.Record, error) {
 func LoadInput() ([]*report.Record, error) {
 	stat, err := load.Avg()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("inlet load, %s", err)
 	}
 	ret := []*report.Record{
 		{Name: "load1", Value: stat.Load1, Precision: 2},
@@ -77,7 +77,7 @@ func DiskInput(args []string) func() ([]*report.Record, error) {
 			}
 			usage, err := disk.Usage(v.Mountpoint)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("inlet disk, %s", err)
 			}
 			ret = append(ret,
 				&report.Record{
@@ -135,7 +135,7 @@ func DiskioInput(args []string) func() ([]*report.Record, error) {
 	return func() ([]*report.Record, error) {
 		stat, err := disk.IOCounters()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("inlet diskio, %s", err)
 		}
 		ret := []*report.Record{}
 		for _, v := range stat {
@@ -183,7 +183,7 @@ func NetInput(args []string) func() ([]*report.Record, error) {
 	return func() ([]*report.Record, error) {
 		stat, err := net.IOCounters(true)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("inlet net, %s", err)
 		}
 		ret := []*report.Record{}
 		for _, v := range stat {
@@ -241,7 +241,7 @@ func ProtoInput(args []string) func() ([]*report.Record, error) {
 	return func() ([]*report.Record, error) {
 		stat, err := net.ProtoCounters(protos)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("inlet proto, %s", err)
 		}
 		ret := []*report.Record{}
 		for _, st := range stat {
@@ -262,7 +262,7 @@ func ProtoInput(args []string) func() ([]*report.Record, error) {
 func SensorInput() ([]*report.Record, error) {
 	stat, err := sensors.SensorsTemperatures()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("inlet sensor, %s", err)
 	}
 
 	ret := []*report.Record{}
@@ -293,7 +293,7 @@ func SensorInput() ([]*report.Record, error) {
 func HostInput() ([]*report.Record, error) {
 	stat, err := host.Info()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("inlet host, %s", err)
 	}
 	ret := []*report.Record{
 		{Name: "host.uptime", Value: float64(stat.Uptime), Precision: 0},
