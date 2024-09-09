@@ -12,7 +12,8 @@ import (
 
 func (s *Server) getMachineProtocol(c *gin.Context) {
 	rsp := &Response{}
-	if runtime.GOOS == "darwin" {
+	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
+		// not implemented on these platforms
 		rsp.Data = gin.H{"protocol": []string{}}
 		return
 	}
