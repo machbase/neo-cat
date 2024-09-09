@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/glebarez/go-sqlite"
 )
 
 type Store struct {
@@ -16,7 +16,7 @@ type Store struct {
 }
 
 func New(connStr string) (*Store, error) {
-	db, err := sql.Open("sqlite3", connStr)
+	db, err := sql.Open("sqlite", connStr)
 	if err != nil {
 		return nil, err
 	}

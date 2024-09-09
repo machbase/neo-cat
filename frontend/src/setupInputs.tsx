@@ -106,7 +106,8 @@ function makeCheckboxList(kind: string, items: string[], selected: string[]) {
     const options: any[] = [];
     const labels = new Map<string,string>();
     for (let i = 0; i < items.length; i++) {
-        const checked: boolean = selected.includes(items[i]);
+        let checked: boolean = false;
+        if (selected) checked = selected.includes(items[i]);
         const label: string = items[i];
         const id = `input-${kind}-${label}`;
         labels.set(id, label);
