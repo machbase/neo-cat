@@ -248,6 +248,11 @@ export function ProcessControl() {
                 <div id='control-error' style={{ color: 'red' }} hidden></div>
                 {controlStatus === PKG_RUNNING ?
                     <SlTabGroup>
+                        <style>{`
+                            .skeleton-chart {
+                                --border-radius: var(--sl-border-radius-medium);
+                            }`}
+                        </style>
                         <SlTab slot="nav" panel="system">System</SlTab>
                         <SlTab slot="nav" panel="machbase">Machbase</SlTab>
                         <SlTabPanel name="system">

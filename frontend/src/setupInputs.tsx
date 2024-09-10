@@ -152,7 +152,7 @@ function makeCheckboxList(kind: string, items: string[], selected: string[]) {
             values.push(label);
         }
         setConfig(`in_${kind}`, values.join(',')).then((rsp: any) => {
-            console.log(rsp);
+           //  console.log(rsp);
         });
     })
     return options;

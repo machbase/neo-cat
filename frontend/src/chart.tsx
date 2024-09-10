@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { queryTagData } from "./api/api";
 import { useTimeout } from "./hooks/useTimeout";
 import * as echarts from 'echarts';
+import SlSkeleton from '@shoelace-style/shoelace/dist/react/skeleton';
 
 function chartOptionTemplate(title: string, series: string[], types?: string[]): any {
     const opts = {
@@ -40,11 +41,17 @@ interface TagChartProps {
     valueCalc?: (v: number) => number
 }
 
-async function loadTag(props: TagChartProps, chartOptions: any, setChartOptions: (opts: any) => void) {
+async function loadTag(props: TagChartProps, baseOptions: any, setChartOptions: (opts: any) => void) {
+    const names = props.names ? props.names : props.tags;
+
+    if (!baseOptions) {
+        baseOptions = chartOptionTemplate(props.title, names, props.types);
+    }
+
     for (let i = 0; i < props.tags.length; i++) {
         const tag: any = await queryTagData(props.tableName, props.tagPrefix + props.tags[i], props.rangeSec);
         if (tag.success) {
-            const opt = { ...chartOptions };
+            const opt = { ...baseOptions };
             if (props.yAxis) {
                 opt.yAxis = props.yAxis;
             }
@@ -88,8 +95,7 @@ async function loadTag(props: TagChartProps, chartOptions: any, setChartOptions:
 function TagChart(props: TagChartProps): any {
     const chartDivRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<any>(null);
-    const names = props.names ? props.names : props.tags;
-    const [chartOptions, setChartOptions] = useState<any>(chartOptionTemplate(props.title, names, props.types));
+    const [chartOptions, setChartOptions] = useState<any>(null);
     const [lastUpdate, setLastUpdate] = useState<number>(0);
 
     useTimeout(() => { loadTag(props, chartOptions, setChartOptions) }, props.intervalSec * 1000);
@@ -101,23 +107,21 @@ function TagChart(props: TagChartProps): any {
             setLastUpdate(Date.now());
             loadTag(props, chartOptions, setChartOptions);
         }
-    }, [props, chartRef, chartOptions, setChartOptions, lastUpdate]);
+    }, [props, chartRef, setChartOptions, lastUpdate]);
     useEffect(() => {
-        if (chartDivRef.current) {
+        if (chartOptions && chartDivRef.current) {
             if (chartRef.current) {
-                const oldChart: echarts.ECharts = chartRef.current;
-                oldChart.dispose();
+                chartRef.current.setOption(chartOptions)
+            } else {
+                chartRef.current = echarts.init(chartDivRef.current, props.theme);
+                chartRef.current.setOption(chartOptions)
             }
-            chartRef.current = echarts.init(chartDivRef.current, props.theme);
         }
-    }, [chartDivRef, props]);
-    useEffect(() => {
-        if (chartRef.current) {
-            chartRef.current.setOption(chartOptions)
-        }
-    }, [chartOptions]);
+    }, [chartOptions, chartDivRef, props]);
     return (
-        <div ref={chartDivRef} style={{ width: '400px', height: '250px' }}></div>
+        <div ref={chartDivRef} style={{ width: '400px', height: '250px' }}>
+            <SlSkeleton effect="sheen" className='skeleton-chart' style={{width:'400px', height:'250px', borderRadius:0}}></SlSkeleton>
+        </div>
     )
 }
 
@@ -231,18 +235,20 @@ export function NeoChart(c: {
         table_rows_types.push('line');
     }
     if (table_rows_counters.length > 0) {
-        const rows: TagChartProps = { ...baseProps, title: `Table Rows Increased`, aggregator: 'diff-nonegative',
-            tags: table_rows_counters, names: table_rows_names, types: table_rows_types}
+        const rows: TagChartProps = {
+            ...baseProps, title: `Table Rows Increased`, aggregator: 'diff-nonegative',
+            tags: table_rows_counters, names: table_rows_names, types: table_rows_types
+        }
         cells.push(<TagChart key={'table_rows_counters'} {...rows} />);
     }
 
-    const dbConns: TagChartProps = { ...baseProps, title: 'DB Conns Inflight', tags: ['statz_sess_raw_conns', 'statz_sess_conns'], names:['raw_conns', 'sess_conns'] }
+    const dbConns: TagChartProps = { ...baseProps, title: 'DB Conns Inflight', tags: ['statz_sess_raw_conns', 'statz_sess_conns'], names: ['raw_conns', 'sess_conns'] }
     cells.push(<TagChart key={'db_conns'} {...dbConns} />);
-    const dbConnsUsed: TagChartProps = { ...baseProps, title: 'DB Conns Used', aggregator: 'diff-nonegative', tags: ['statz_sess_conns_used'], names:['sess_conns_used'] }
+    const dbConnsUsed: TagChartProps = { ...baseProps, title: 'DB Conns Used', aggregator: 'diff-nonegative', tags: ['statz_sess_conns_used'], names: ['sess_conns_used'] }
     cells.push(<TagChart key={'db_conns_used'} {...dbConnsUsed} />);
-    const dbStmts: TagChartProps = { ...baseProps, title: 'DB Stmt Inflight', tags: ['statz_sess_stmts'], names:['stmt'] }
+    const dbStmts: TagChartProps = { ...baseProps, title: 'DB Stmt Inflight', tags: ['statz_sess_stmts'], names: ['stmt'] }
     cells.push(<TagChart key={'db_stmts'} {...dbStmts} />);
-    const dbStmtsUsed: TagChartProps = { ...baseProps, title: 'DB Stmt Used', aggregator: 'diff-nonegative', tags: ['statz_sess_stmts_used'], names:['stmt_used'] }
+    const dbStmtsUsed: TagChartProps = { ...baseProps, title: 'DB Stmt Used', aggregator: 'diff-nonegative', tags: ['statz_sess_stmts_used'], names: ['stmt_used'] }
     cells.push(<TagChart key={'db_stmts_used'} {...dbStmtsUsed} />);
     const neoHeaps: TagChartProps = {
         ...baseProps, title: 'Neo Heap', tags: ['statz_mem_heap_in_use'], names: ['heap_in_use'],
