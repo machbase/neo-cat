@@ -23,7 +23,7 @@ func (s *Server) StartProcess() error {
 	tagPrefix, _ := s.data.GetConfig("tag_prefix")
 	neoStatz, _ := s.data.GetConfig("neo_statz_addr")
 	if neoStatz == "" {
-		neoStatz = "http://127.0.0.1:5654/db/statz"
+		neoStatz = fmt.Sprintf("%s/db/statz", s.neoHttpAddr)
 	}
 
 	if s.process != nil && s.process.Running() {

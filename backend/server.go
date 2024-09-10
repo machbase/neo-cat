@@ -14,7 +14,6 @@ import (
 	"net/url"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -102,9 +101,9 @@ func (s *Server) Start() error {
 		s.lsnr = lsnr
 	}
 
-	backendClient := &http.Client{}
+	neoHttpClient := &http.Client{}
 	if strings.HasPrefix(s.neoHttpAddr, "unix://") {
-		backendClient.Transport = &http.Transport{
+		neoHttpClient.Transport = &http.Transport{
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 				ret, err := net.Dial("unix", s.neoHttpAddr[7:])
 				if err != nil {
@@ -113,7 +112,6 @@ func (s *Server) Start() error {
 				return ret, err
 			},
 		}
-		backendClient.Timeout = 500 * time.Millisecond
 	}
 	backendProxy := &BackendHttpProxy{
 		Prefix: "/api/",
@@ -124,7 +122,7 @@ func (s *Server) Start() error {
 		backendProxy.Address = fmt.Sprintf("unix://%s", path)
 	}
 	backendReq, _ := json.Marshal(&SetBackendReq{HttpProxy: *backendProxy})
-	backendRsp, err := backendClient.Post("http://local.local/web/api/pkgs/process/neo-cat", "application/json", bytes.NewBuffer(backendReq))
+	backendRsp, err := neoHttpClient.Post("http://local.local/web/api/pkgs/process/neo-cat", "application/json", bytes.NewBuffer(backendReq))
 	if err != nil {
 		fmt.Println("failed to set backend:", err)
 		return fmt.Errorf("failed to set backend: %s", err.Error())

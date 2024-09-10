@@ -1,9 +1,13 @@
 package internal
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"neo-cat/backend/pstag/report"
+	"net"
 	"net/http"
+	"strings"
 )
 
 type NeoStatz struct {
@@ -41,16 +45,30 @@ type NeoStatz struct {
 }
 
 func NeoStatzInput(args []string) func() ([]*report.Record, error) {
+	addr := args[0]
+
 	var httpClient *http.Client
-	if httpClient == nil {
-		tr := &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-		}
+	if strings.HasPrefix(addr, "unix://") {
 		httpClient = &http.Client{
-			Transport: tr,
+			Transport: &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+				DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+					ret, err := net.Dial("unix", addr[7:])
+					if err != nil {
+						fmt.Println("Failed to dial", err)
+					}
+					return ret, err
+				},
+			},
+		}
+	} else {
+		httpClient = &http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+			},
 		}
 	}
-	addr := args[0]
+
 	return func() ([]*report.Record, error) {
 		rsp, err := httpClient.Get(addr)
 		if err != nil {

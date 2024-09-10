@@ -29,6 +29,7 @@ func (in *InputHandler) Start(interval time.Duration, tagPrefix string) error {
 		return err
 	}
 
+	in.run(time.Now(), tagPrefix)
 	in.closeWg.Add(1)
 	go func() {
 		tick := time.NewTicker(interval)
@@ -36,18 +37,7 @@ func (in *InputHandler) Start(interval time.Duration, tagPrefix string) error {
 		for {
 			select {
 			case ts := <-tick.C:
-				recs, err := in.inlet.Handle()
-				if err != nil {
-					slog.Error("failed to get input", "error", err.Error())
-				}
-				if len(recs) > 0 {
-					if tagPrefix != "" {
-						for _, r := range recs {
-							r.Name = tagPrefix + r.Name
-						}
-					}
-					in.ch <- &report.Report{Ts: ts, Records: recs}
-				}
+				in.run(ts, tagPrefix)
 			case <-in.closeCh:
 				break loop
 			}
@@ -63,5 +53,20 @@ func (in *InputHandler) Stop() {
 
 	if err := in.inlet.Close(); err != nil {
 		slog.Error("failed to close input", "error", err.Error())
+	}
+}
+
+func (in *InputHandler) run(ts time.Time, tagPrefix string) {
+	recs, err := in.inlet.Handle()
+	if err != nil {
+		slog.Error("failed to get input", "error", err.Error())
+	}
+	if len(recs) > 0 {
+		if tagPrefix != "" {
+			for _, r := range recs {
+				r.Name = tagPrefix + r.Name
+			}
+		}
+		in.ch <- &report.Report{Ts: ts, Records: recs}
 	}
 }
