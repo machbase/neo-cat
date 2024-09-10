@@ -21,9 +21,9 @@ func (s *Server) StartProcess() error {
 	}
 	tableName, _ := s.data.GetConfig("table_name")
 	tagPrefix, _ := s.data.GetConfig("tag_prefix")
-	neoStatz, _ := s.data.GetConfig("neo_statz_addr")
-	if neoStatz == "" {
-		neoStatz = fmt.Sprintf("%s/db/statz", s.neoHttpAddr)
+	neoCounters := []string{"EXAMPLE"}
+	if tables, _ := s.data.GetConfig("neo_counter_tables"); tables != "" {
+		neoCounters = strings.Split(tables, ",")
 	}
 
 	if s.process != nil && s.process.Running() {
@@ -34,7 +34,6 @@ func (s *Server) StartProcess() error {
 		pstag.WithInterval(interval),
 		pstag.WithTagPrefix(tagPrefix),
 	)
-	s.process.AddInput(plugin.NewInlet("in-neo-statz", neoStatz))
 	s.process.AddInput(plugin.NewInlet("in-load"))
 	s.process.AddInput(plugin.NewInlet("in-cpu"))
 	s.process.AddInput(plugin.NewInlet("in-mem"))
@@ -52,6 +51,10 @@ func (s *Server) StartProcess() error {
 	}
 	if val, err := s.data.GetConfig("in_net"); err == nil && strings.TrimSpace(val) != "" {
 		s.process.AddInput(plugin.NewInlet("in-net", val))
+	}
+	s.process.AddInput(plugin.NewInlet("in-neo-statz", s.neoHttpAddr))
+	if len(neoCounters) > 0 {
+		s.process.AddInput(plugin.NewInlet("in-neo-table-rows-counter", append([]string{s.neoHttpAddr}, neoCounters...)...))
 	}
 	if tableName != "" {
 		s.process.AddOutput(plugin.NewOutlet("out-mqtt", fmt.Sprintf("tcp://127.0.0.1:5653/db/append/%s:csv", tableName)))

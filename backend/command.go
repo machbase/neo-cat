@@ -48,9 +48,11 @@ func Run() int {
 				// Since machbase-neo unix socket api doesn't require authorization header,
 				// the neo-cat is using a unix socket server to report the proxy port to machbase-neo.
 				// If the address is not empty and starts with "unix://", set it as the neoHttpAddr and break the loop.
-				if addr != "" && strings.HasPrefix(addr, "unix://") {
+				if strings.HasPrefix(addr, "unix://") {
 					neoHttpAddr = addr
 					break
+				} else if strings.HasPrefix(addr, "http://") {
+					neoHttpAddr = addr
 				}
 			}
 		}

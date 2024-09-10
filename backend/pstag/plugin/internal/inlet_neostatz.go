@@ -1,13 +1,8 @@
 package internal
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 	"neo-cat/backend/pstag/report"
-	"net"
-	"net/http"
-	"strings"
 )
 
 type NeoStatz struct {
@@ -45,39 +40,12 @@ type NeoStatz struct {
 }
 
 func NeoStatzInput(args []string) func() ([]*report.Record, error) {
-	addr := args[0]
-
-	var httpClient *http.Client
-	if strings.HasPrefix(addr, "unix://") {
-		httpClient = &http.Client{
-			Transport: &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
-				DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-					ret, err := net.Dial("unix", addr[7:])
-					if err != nil {
-						fmt.Println("Failed to dial", err)
-					}
-					return ret, err
-				},
-			},
-		}
-	} else {
-		httpClient = &http.Client{
-			Transport: &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
-			},
-		}
-	}
+	InitNeoHttpClient(args[0])
 
 	return func() ([]*report.Record, error) {
-		rsp, err := httpClient.Get(addr)
+		o, err := neoHttpClient.GetStatz()
 		if err != nil {
-			return nil, err
-		}
-		defer rsp.Body.Close()
-		o := NeoStatz{}
-		if err := json.NewDecoder(rsp.Body).Decode(&o); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("inlet_neo_statz %s", err)
 		}
 		ret := []*report.Record{
 			{Name: "statz_mqtt_bytes_recv", Value: float64(o.Mqtt.BytesRecv), Precision: 0},

@@ -185,3 +185,11 @@ export const getMachine = async(category: 'protocol'|'partition'|'diskio'|'net')
         url: `/api/machine/${category}`,
     });
 }
+
+export const getDBTables = async() => {
+    return request({
+        method: 'GET',
+        baseURL: '/web/apps/neo-cat',
+        url: `/api/db/tables`,
+    });
+}

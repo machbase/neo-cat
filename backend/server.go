@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"neo-cat/backend/model"
 	"neo-cat/backend/pstag"
 	"neo-cat/backend/store"
@@ -63,14 +64,15 @@ func WithNeoHttpAddress(neoHttpAddr string) func(*Server) error {
 }
 
 type Server struct {
-	httpd       *http.Server
-	debugMode   bool
-	listenAddr  string
-	neoHttpAddr string
-	lsnr        net.Listener
-	data        *store.Store
-	stopOnce    sync.Once
-	process     *pstag.PsTag
+	httpd         *http.Server
+	debugMode     bool
+	listenAddr    string
+	neoHttpAddr   string
+	neoHttpClient *http.Client
+	lsnr          net.Listener
+	data          *store.Store
+	stopOnce      sync.Once
+	process       *pstag.PsTag
 }
 
 type SetBackendReq struct {
@@ -101,9 +103,9 @@ func (s *Server) Start() error {
 		s.lsnr = lsnr
 	}
 
-	neoHttpClient := &http.Client{}
+	s.neoHttpClient = &http.Client{}
 	if strings.HasPrefix(s.neoHttpAddr, "unix://") {
-		neoHttpClient.Transport = &http.Transport{
+		s.neoHttpClient.Transport = &http.Transport{
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 				ret, err := net.Dial("unix", s.neoHttpAddr[7:])
 				if err != nil {
@@ -122,7 +124,7 @@ func (s *Server) Start() error {
 		backendProxy.Address = fmt.Sprintf("unix://%s", path)
 	}
 	backendReq, _ := json.Marshal(&SetBackendReq{HttpProxy: *backendProxy})
-	backendRsp, err := neoHttpClient.Post("http://local.local/web/api/pkgs/process/neo-cat", "application/json", bytes.NewBuffer(backendReq))
+	backendRsp, err := s.neoHttpClient.Post("http://local.local/web/api/pkgs/process/neo-cat", "application/json", bytes.NewBuffer(backendReq))
 	if err != nil {
 		fmt.Println("failed to set backend:", err)
 		return fmt.Errorf("failed to set backend: %s", err.Error())
@@ -130,6 +132,10 @@ func (s *Server) Start() error {
 	if backendRsp.StatusCode != http.StatusOK {
 		fmt.Println("failed to set backend:", backendRsp.StatusCode)
 		return fmt.Errorf("failed to set backend: %d", backendRsp.StatusCode)
+	} else {
+		fmt.Println("backend set successfully")
+		io.ReadAll(backendRsp.Body)
+		backendRsp.Body.Close()
 	}
 	if s.debugMode {
 		gin.SetMode(gin.DebugMode)
@@ -196,6 +202,7 @@ func (s *Server) router() *gin.Engine {
 	group.GET("/count_users", s.getCountUsers)
 	group.POST("/users", s.postUsers)
 	group.DELETE("/users/:username", s.deleteUser)
+	group.GET("/db/tables", s.getDBTables)
 	group.GET("/machine/protocol", s.getMachineProtocol)
 	group.GET("/machine/partition", s.getMachineDiskPartition)
 	group.GET("/machine/diskio", s.getMachineDiskIO)
@@ -310,6 +317,25 @@ func (s *Server) ping(c *gin.Context) {
 	rsp := &Response{}
 	rsp.Success, rsp.Reason = true, "success"
 	rsp.Data = gin.H{"message": "pong"}
+	c.JSON(200, rsp)
+}
+
+func (s *Server) getDBTables(c *gin.Context) {
+	rsp := &Response{}
+	query := queryDBTables()
+	result, err := s.neoHttpClient.Get("http://local.local/db/query?q=" + url.QueryEscape(query))
+	if err != nil {
+		rsp.Reason = err.Error()
+		c.JSON(500, rsp)
+		return
+	}
+	defer result.Body.Close()
+	err = json.NewDecoder(result.Body).Decode(rsp)
+	if err != nil {
+		rsp.Reason = err.Error()
+		c.JSON(500, rsp)
+		return
+	}
 	c.JSON(200, rsp)
 }
 

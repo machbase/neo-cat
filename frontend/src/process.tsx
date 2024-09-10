@@ -37,6 +37,7 @@ export function ProcessControl() {
     const [sInputNet, setInputNet] = useState<string[]>([]);
     const [sInputDiskio, setInputDiskio] = useState<string[]>([]);
     const [sInputDisk, setInputDisk] = useState<string[]>([]);
+    const [sInputTableRowsCounter, setInputTableRowsCounter] = useState<string[]>([]);
 
     const reloadConfig = async () => {
         const intervalSec = await getConfigIntervalSec(chartRefreshSec);
@@ -82,6 +83,15 @@ export function ProcessControl() {
                 setInputDiskio(diskios);
             }
         }).catch((err) => { });
+        getConfig('in_table_rows_counter').then((rsp: any) => {
+            if (rsp.success && rsp.data.in_table_rows_counter) {
+                var rows = [];
+                rsp.data.in_table_rows_counter.split(',').forEach((row: string) => {
+                    rows.push(row.trim());
+                });
+                setInputTableRowsCounter(rows);
+            }
+        });
     }
 
     useEffect(() => {
@@ -196,9 +206,9 @@ export function ProcessControl() {
 
     return (
         <>
-            <div style={{ textAlign: 'center' }}>
-                <div style={{ display: 'inline-flex', flexFlow: 'nowrap', alignItems: 'start' }}>
-                    <SlButtonGroup style={{ marginRight: 'var(--sl-spacing-small)' }}>
+            <div style={{ textAlign: 'start' }}>
+                <div style={{ display: 'inline-flex', flexFlow: 'nowrap', alignItems: 'start', marginLeft: 'var(--sl-spacing-2x-large)' }}>
+                    <SlButtonGroup style={{ marginRight: 'var(--sl-spacing-2x-large)' }}>
                         <SlTooltip content='Start agent'>
                             <SlButton id='btn-start' onClick={handleStart} disabled><SlIcon name='play' slot='prefix'></SlIcon>Start</SlButton>
                         </SlTooltip>
@@ -221,16 +231,18 @@ export function ProcessControl() {
                                 <SlMenuItem type='checkbox' value='25h'>Last 25 hours</SlMenuItem>
                             </SlMenu>
                         </SlDropdown>
-                        <SlButton onClick={handleSettings}><SlIcon name='gear' slot='prefix'></SlIcon>Settings</SlButton>
                         <StatusButton
                             intervalSec={2}
                             statusCallback={(st) => { setControlStatus(st); updateStatus(st) }}
                             onClick={handleInputs}
                         />
                     </SlButtonGroup>
+                    <SlButtonGroup style={{ marginRight: 'var(--sl-spacing-2x-large)' }}>
+                        <SlButton onClick={Logout}><SlIcon name='escape' slot='prefix'></SlIcon>Logout</SlButton>
+                    </SlButtonGroup>
                     <SlButtonGroup>
                         <SlButton onClick={handleToggleTheme}><SlIcon id='theme-icon' name={sThemeIcon} slot='prefix'></SlIcon></SlButton>
-                        <SlButton onClick={Logout}><SlIcon name='escape' slot='prefix'></SlIcon>Logout</SlButton>
+                        <SlButton onClick={handleSettings}><SlIcon name='gear' slot='prefix'></SlIcon></SlButton>
                     </SlButtonGroup>
                 </div>
                 <div id='control-error' style={{ color: 'red' }} hidden></div>
@@ -258,6 +270,7 @@ export function ProcessControl() {
                                 rangeSec={chartRangeSec}
                                 refreshIntervalSec={chartRefreshSec}
                                 theme={chartTheme}
+                                inTableRowsCounter={sInputTableRowsCounter}
                             />
                         </SlTabPanel>
                     </SlTabGroup>

@@ -154,6 +154,8 @@ func init() {
 		"--in-host               Report host information")
 	RegisterInletWith("in-neo-statz", NewInletFuncArgs(internal.NeoStatzInput), false,
 		"--in-neo-statz          Report machbase-neo statz")
+	RegisterInletWith("in-neo-table-rows-counter", NewInletFuncArgs(internal.NeoTableRowsCounterInput), false,
+		"--in-neo-table-rows-counter  Report machbase-neo table counter")
 	// outputs
 	RegisterOutletWith("out-file", internal.NewFileOutlet, "",
 		"--out-file <path>       Report output to the file")

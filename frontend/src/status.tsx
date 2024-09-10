@@ -41,6 +41,7 @@ export function StatusButton(conf: {
             <SlIcon name='activity'></SlIcon>
             <SlBadge variant={variant} pill pulse={sPulse}>{status}</SlBadge>
             {conf.label}
+            &nbsp;Vital
         </SlButton>
     )
 }
