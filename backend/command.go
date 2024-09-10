@@ -5,11 +5,20 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"neo-cat/backend/util"
 )
 
+/*
+*
+* Run is a function that starts the server.
+* It reads the command line arguments and starts the server.
+
+	MACHBASE_NEO_HTTP="unix:///tmp/machbase-neo-unix.sock" \
+	go run . --pid ./pid.txt --listen "tcp://127.0.0.1:0" --debug
+*/
 func Run() int {
 	optPid := flag.String("pid", "", "pid file")
 	optDebug := flag.Bool("debug", false, "debug mode")
@@ -30,10 +39,29 @@ func Run() int {
 		}()
 	}
 
+	// neo http listeners
+	var neoHttpAddr string
+	if envHttp := os.Getenv("MACHBASE_NEO_HTTP"); envHttp != "" {
+		// Check if the environment variable MACHBASE_NEO_HTTP is set and not empty
+		if envHttp := os.Getenv("MACHBASE_NEO_HTTP"); envHttp != "" {
+			for _, addr := range strings.Split(envHttp, ",") {
+				// Since machbase-neo unix socket api doesn't require authorization header,
+				// the neo-cat is using a unix socket server to report the proxy port to machbase-neo.
+				// If the address is not empty and starts with "unix://", set it as the neoHttpAddr and break the loop.
+				if addr != "" && strings.HasPrefix(addr, "unix://") {
+					neoHttpAddr = addr
+					break
+				}
+			}
+		}
+	}
+
+	// start neo-cat server
 	svr := NewServer(
 		WithListenAddress(*optListen),
 		WithDebugMode(*optDebug),
 		WithDatabase(*optDatabase),
+		WithNeoHttpAddress(neoHttpAddr),
 	)
 	go svr.Start()
 

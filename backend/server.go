@@ -1,6 +1,9 @@
 package backend
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
 	"neo-cat/backend/model"
 	"neo-cat/backend/pstag"
@@ -11,6 +14,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -52,31 +56,82 @@ func WithDatabase(connString string) func(*Server) error {
 	}
 }
 
+func WithNeoHttpAddress(neoHttpAddr string) func(*Server) error {
+	return func(s *Server) error {
+		s.neoHttpAddr = neoHttpAddr
+		return nil
+	}
+}
+
 type Server struct {
-	httpd      *http.Server
-	debugMode  bool
-	listenAddr string
-	lsnr       net.Listener
-	data       *store.Store
-	stopOnce   sync.Once
-	process    *pstag.PsTag
+	httpd       *http.Server
+	debugMode   bool
+	listenAddr  string
+	neoHttpAddr string
+	lsnr        net.Listener
+	data        *store.Store
+	stopOnce    sync.Once
+	process     *pstag.PsTag
+}
+
+type SetBackendReq struct {
+	HttpProxy BackendHttpProxy `json:"http_proxy"`
+}
+
+type BackendHttpProxy struct {
+	Prefix      string `json:"prefix"`
+	Address     string `json:"address"`
+	StripPrefix string `json:"strip_prefix,omitempty"`
 }
 
 func (s *Server) Start() error {
+	var network, path string
 	if strings.HasPrefix(s.listenAddr, "unix://") {
-		path := strings.TrimPrefix(s.listenAddr, "unix://")
-		if lsnr, err := net.Listen("unix", path); err != nil {
-			return err
-		} else {
-			s.lsnr = lsnr
-		}
+		path = strings.TrimPrefix(s.listenAddr, "unix://")
+		network = "unix"
+	} else if strings.HasPrefix(s.listenAddr, "http://") {
+		path = strings.TrimPrefix(s.listenAddr, "http://")
+		network = "tcp"
 	} else {
-		path := strings.TrimPrefix(s.listenAddr, "tcp://")
-		if lsnr, err := net.Listen("tcp", path); err != nil {
-			return err
-		} else {
-			s.lsnr = lsnr
+		path = strings.TrimPrefix(s.listenAddr, "tcp://")
+		network = "tcp"
+	}
+	if lsnr, err := net.Listen(network, path); err != nil {
+		return err
+	} else {
+		s.lsnr = lsnr
+	}
+
+	backendClient := &http.Client{}
+	if strings.HasPrefix(s.neoHttpAddr, "unix://") {
+		backendClient.Transport = &http.Transport{
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				ret, err := net.Dial("unix", s.neoHttpAddr[7:])
+				if err != nil {
+					fmt.Println("Failed to dial", err)
+				}
+				return ret, err
+			},
 		}
+		backendClient.Timeout = 500 * time.Millisecond
+	}
+	backendProxy := &BackendHttpProxy{
+		Prefix: "/api/",
+	}
+	if network == "tcp" {
+		backendProxy.Address = fmt.Sprintf("http://%s", s.lsnr.Addr().String())
+	} else if network == "unix" {
+		backendProxy.Address = fmt.Sprintf("unix://%s", path)
+	}
+	backendReq, _ := json.Marshal(&SetBackendReq{HttpProxy: *backendProxy})
+	backendRsp, err := backendClient.Post("http://local.local/web/api/pkgs/process/neo-cat", "application/json", bytes.NewBuffer(backendReq))
+	if err != nil {
+		fmt.Println("failed to set backend:", err)
+		return fmt.Errorf("failed to set backend: %s", err.Error())
+	}
+	if backendRsp.StatusCode != http.StatusOK {
+		fmt.Println("failed to set backend:", backendRsp.StatusCode)
+		return fmt.Errorf("failed to set backend: %d", backendRsp.StatusCode)
 	}
 	if s.debugMode {
 		gin.SetMode(gin.DebugMode)
@@ -100,9 +155,15 @@ func (s *Server) Stop() {
 		if s.process != nil && s.process.Running() {
 			s.process.Stop()
 		}
-		s.httpd.Close()
-		s.lsnr.Close()
-		s.data.Close()
+		if s.httpd != nil {
+			s.httpd.Close()
+		}
+		if s.lsnr != nil {
+			s.lsnr.Close()
+		}
+		if s.data != nil {
+			s.data.Close()
+		}
 	})
 }
 

@@ -15,7 +15,3 @@ env:
 
 stdout_log: debug
 stderr_log: warn
-
-http_proxy:
-  prefix: /api/
-  address: unix://../storage/.sock

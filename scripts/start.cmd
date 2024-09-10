@@ -1,1 +1,1 @@
-.\.backend\neo-cat.exe --listen unix://..\storage\.sock --database ..\storage\.data.db --pid .\.backend\pid
+.\.backend\neo-cat.exe --listen http://127.0.0.1:0 --database ..\storage\.data.db --pid .\.backend\pid
