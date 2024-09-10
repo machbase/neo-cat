@@ -190,7 +190,7 @@ export function ProcessControl() {
         } else if (themeIcon && themeIcon.getAttribute('name') === 'sun') {
             setThemeIcon('moon');
             document.getElementById('genesis').setAttribute('class', 'sl-theme-light');
-            setChartTheme('');
+            setChartTheme('light');
         }
     };
 
