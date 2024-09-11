@@ -226,10 +226,10 @@ export function ProcessControl() {
                 <div style={{ display: 'inline-flex', flexFlow: 'nowrap', alignItems: 'start', marginLeft: 'var(--sl-spacing-2x-large)' }}>
                     <SlButtonGroup style={{ marginRight: 'var(--sl-spacing-2x-large)' }}>
                         <SlTooltip content='Start agent'>
-                            <SlButton id='btn-start' onClick={handleStart} disabled><SlIcon name='play' slot='prefix'></SlIcon>Start</SlButton>
+                            <SlButton id='btn-start' onClick={handleStart} disabled><SlIcon name='play-fill' slot='prefix'></SlIcon>Start</SlButton>
                         </SlTooltip>
                         <SlTooltip content='Stop agent'>
-                            <SlButton id='btn-stop' onClick={handleStop} disabled><SlIcon name='stop' slot='prefix'></SlIcon>Stop</SlButton>
+                            <SlButton id='btn-stop' onClick={handleStop} disabled><SlIcon name='stop-fill' slot='prefix'></SlIcon>Stop</SlButton>
                         </SlTooltip>
                     </SlButtonGroup>
                     <SlButtonGroup style={{ marginRight: 'var(--sl-spacing-4x-large)' }}>
