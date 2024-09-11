@@ -9,6 +9,7 @@ require (
 	github.com/lmittmann/tint v1.0.4
 	github.com/shirou/gopsutil/v4 v4.24.8
 	github.com/stretchr/testify v1.9.0
+	github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 

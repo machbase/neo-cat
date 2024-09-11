@@ -15,12 +15,18 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/teris-io/shortid"
 )
 
 func NewServer(opts ...Option) *Server {
-	ret := &Server{}
+	ret := &Server{
+		sid:            shortid.MustNew(1, shortid.DefaultABC, 2345),
+		sidTable:       map[string]time.Time{},
+		sidIdleTimeout: 30 * time.Minute,
+	}
 	for _, opt := range opts {
 		if err := opt(ret); err != nil {
 			panic(err)
@@ -64,15 +70,19 @@ func WithNeoHttpAddress(neoHttpAddr string) func(*Server) error {
 }
 
 type Server struct {
-	httpd         *http.Server
-	debugMode     bool
-	listenAddr    string
-	neoHttpAddr   string
-	neoHttpClient *http.Client
-	lsnr          net.Listener
-	data          *store.Store
-	stopOnce      sync.Once
-	process       *pstag.PsTag
+	httpd          *http.Server
+	debugMode      bool
+	listenAddr     string
+	neoHttpAddr    string
+	neoHttpClient  *http.Client
+	lsnr           net.Listener
+	data           *store.Store
+	stopOnce       sync.Once
+	process        *pstag.PsTag
+	sid            *shortid.Shortid
+	sidTable       map[string]time.Time
+	sidLock        sync.RWMutex
+	sidIdleTimeout time.Duration
 }
 
 type SetBackendReq struct {
@@ -193,8 +203,10 @@ func (s *Server) router() *gin.Engine {
 		if cnt == 0 {
 			return
 		}
-		authHdr := ctx.GetHeader("Authorization")
-		if !s.verifyToken(authHdr) {
+		authToken := strings.TrimPrefix(ctx.GetHeader("Authorization"), "Bearer ")
+		if s.verifyToken(authToken) {
+			s.updateToken(authToken)
+		} else {
 			ctx.String(http.StatusUnauthorized, "")
 			ctx.Abort()
 		}
@@ -241,15 +253,36 @@ var dbUrl *url.URL
 var dbProxy *httputil.ReverseProxy
 
 func (s *Server) issueToken(username string) string {
-	return "dummy-" + username
+	s.sidLock.Lock()
+	defer s.sidLock.Unlock()
+
+	id, _ := s.sid.Generate()
+	id = username + "-" + id
+	s.sidTable[id] = time.Now()
+	return id
+}
+
+func (s *Server) updateToken(tok string) {
+	s.sidLock.Lock()
+	defer s.sidLock.Unlock()
+	s.sidTable[tok] = time.Now()
+	for k, v := range s.sidTable {
+		if time.Since(v) >= s.sidIdleTimeout {
+			delete(s.sidTable, k)
+		}
+	}
 }
 
 func (s *Server) verifyToken(tok string) bool {
-	// TODO: verify token
-	if tok != "" {
-		return true
+	s.sidLock.RLock()
+	defer s.sidLock.RUnlock()
+	if ts, ok := s.sidTable[tok]; ok {
+		if time.Since(ts) < s.sidIdleTimeout {
+			return true
+		}
+		delete(s.sidTable, tok)
 	}
-	return true
+	return false
 }
 
 func (s *Server) getCountUsers(c *gin.Context) {

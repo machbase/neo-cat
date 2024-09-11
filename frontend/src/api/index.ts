@@ -52,36 +52,14 @@ request.interceptors.response.use(
         return res;
     },
     async (error: any) => {
+        if (error.response && error.response.status === 401) {
+            localStorage.removeItem('token');
+            return {success: true, reason:"unauthorized", data:{count:-401}};
+        }
+        if (error.response && error.response.status !== 401) {
+            return error.response.data;
+        }
         console.log("error", error);
-        return error.response.data;
-        // let sData;
-        // if (error.response && error.response.status === 401) {
-        //     if (error.response.config.url !== `/api/relogin`) {
-        //         const sRefresh: any = await tokenRefresh();
-        //         if (sRefresh.success) {
-        //             localStorage.setItem('accessToken', sRefresh.accessToken);
-        //             localStorage.setItem('refreshToken', sRefresh.refreshToken);
-        //             if (error.response.config.url !== `/api/login`) {
-        //                 sData = request(error.config);
-        //             } else {
-        //                 return error;
-        //             }
-        //         } else {
-        //             localStorage.setItem('package', window.location.href);
-        //             window.location.replace(window.location.origin + '/web/ui/login');
-        //             return error;
-        //         }
-        //     } else {
-        //         return error;
-        //     }
-        //     if (sData) {
-        //         return sData;
-        //     }
-        //     return error;
-        // }
-        // if (error.response && error.response.status !== 401) {
-        //     return error.response;
-        // }
     }
 );
 

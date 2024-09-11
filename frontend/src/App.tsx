@@ -20,7 +20,7 @@ const App = () => {
     };
     useEffect(() => {
         initApp();
-    }, []);
+    }, [sToken]);
 
     if (sCountUsers === 0) {
         return (
