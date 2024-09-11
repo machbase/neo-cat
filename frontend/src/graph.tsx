@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { queryTagData } from "./api/api";
 import { useTimeout } from "./hooks/useTimeout";
 import * as echarts from 'echarts';
@@ -502,6 +502,7 @@ function Graph(conf: {
 }) {
     const names = conf.names ? conf.names : conf.tags;
     const tagNames = conf.tags.map((tag) => { return conf.gds.tagPrefix + tag })
+    const [theme, setTheme] = useState(conf.gds.theme);
 
     const chartDivRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<ECharts>(null);
@@ -518,6 +519,11 @@ function Graph(conf: {
                 }
                 if (rsp.data.rows.length === 0) return;
 
+                if (chartRef.current && conf.gds.theme !== theme) {
+                    chartRef.current.dispose();
+                    chartRef.current = null;
+                    setTheme(conf.gds.theme);
+                }
                 if (chartRef.current === null) {
                     chartRef.current = echarts.init(chartDivRef.current, conf.gds.theme);
                     chartRef.current.setOption({
@@ -551,7 +557,7 @@ function Graph(conf: {
                 console.log(`error on chart ${names}`, err);
             })
         };
-    }, [conf, tagNames, names]);
+    }, [conf, tagNames, names, theme]);
 
     useTimeout(() => { refreshData() }, conf.gds.refreshIntervalSec * 1000);
     useEffect(() => { refreshData(); }, [refreshData]);

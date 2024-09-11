@@ -13,7 +13,7 @@ import SlTabPanel from '@shoelace-style/shoelace/dist/react/tab-panel';
 import type SlDrawerElement from '@shoelace-style/shoelace/dist/components/drawer/drawer';
 import type SlDropdownElement from '@shoelace-style/shoelace/dist/components/dropdown/dropdown';
 import type SlMenuItemElement from '@shoelace-style/shoelace/dist/components/menu-item/menu-item';
-import { startControl, stopControl, getConfig, getConfigIntervalSec, getConfigTableName, parseDuration, getConfigTagPrefix, getConfigNeoStatzAddr } from './api/api.ts';
+import { startControl, stopControl, getConfig, getConfigIntervalSec, getConfigTableName, parseDuration, getConfigTagPrefix, getConfigNeoStatzAddr, setConfig } from './api/api.ts';
 import { Logout } from './login.tsx';
 import { SystemChart, NeoChart } from './chart.tsx';
 import { StatusButton } from './status.tsx';
@@ -38,6 +38,20 @@ export function ProcessControl() {
     const [sInputDiskio, setInputDiskio] = useState<string[]>([]);
     const [sInputDisk, setInputDisk] = useState<string[]>([]);
     const [sInputTableRowsCounter, setInputTableRowsCounter] = useState<string[]>([]);
+
+    getConfig('theme').then((rsp: any) => {
+        if (rsp.success && rsp.data.theme) {
+            if (rsp.data.theme === 'dark') {
+                setThemeIcon('sun');
+                document.getElementById('genesis').setAttribute('class', 'sl-theme-dark');
+                setChartTheme('dark');
+            } else {
+                setThemeIcon('moon');
+                document.getElementById('genesis').setAttribute('class', 'sl-theme-light');
+                setChartTheme('light');
+            }
+        }
+    });
 
     const reloadConfig = async () => {
         const intervalSec = await getConfigIntervalSec(chartRefreshSec);
@@ -197,10 +211,12 @@ export function ProcessControl() {
             setThemeIcon('sun');
             document.getElementById('genesis').setAttribute('class', 'sl-theme-dark');
             setChartTheme('dark');
+            setConfig('theme', 'dark');
         } else if (themeIcon && themeIcon.getAttribute('name') === 'sun') {
             setThemeIcon('moon');
             document.getElementById('genesis').setAttribute('class', 'sl-theme-light');
             setChartTheme('light');
+            setConfig('theme', 'light');
         }
     };
 

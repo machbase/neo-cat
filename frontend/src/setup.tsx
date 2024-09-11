@@ -209,7 +209,6 @@ export interface BackendConfig {
 };
 
 export function Settings(pref: { tableName: string, interval: string, tagPrefix: string, neoStatzAddr: string }): any {
-    console.log(pref);
     const onUpdate = async (bc: BackendConfig) => {
         if (bc.tableName.length > 0 && bc.tableName !== pref.tableName) {
             const rspCreTable: any = await createTable(bc.tableName);
