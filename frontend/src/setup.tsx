@@ -169,7 +169,8 @@ function StageUser({ callback }: { callback: (username: string, password: string
             <SlAlert variant="primary" open>
                 <SlIcon slot="icon" name="gear"></SlIcon>
                 <strong>Setting up</strong><br />
-                Create a user to get started.
+                Create a user to get started. This user is specific to the neo-cat web application and is separate from the database user.
+                Do not use the same password as the database user.
             </SlAlert>
             <br />
             <form id='user-form' >
