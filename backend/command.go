@@ -15,10 +15,15 @@ import (
 *
 * Run is a function that starts the server.
 * It reads the command line arguments and starts the server.
-
-	MACHBASE_NEO_HTTP="unix:///tmp/machbase-neo-unix.sock" \
-	go run . --pid ./pid.txt --listen "tcp://127.0.0.1:0" --debug
-*/
+*
+* Run backend for development:
+*
+*	MACHBASE_NEO_HTTP="unix:///tmp/machbase-neo-unix.sock" \
+*	go run . --pid ./pid.txt --listen "tcp://127.0.0.1:12345" --debug
+*
+* Run frontend for development: (packages.json has proxy setting for the http://127.0.0.1:12345)
+*   npm run dev
+ */
 func Run() int {
 	optPid := flag.String("pid", "", "pid file")
 	optDebug := flag.Bool("debug", false, "debug mode")
