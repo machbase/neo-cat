@@ -8,7 +8,7 @@ stop:
     run: .\.backend\stop.cmd
 
 
-auto_start: false
+auto_start: true
 
 env:
   - DEBUG=false
