@@ -53,8 +53,12 @@ request.interceptors.response.use(
     },
     async (error: any) => {
         if (error.response && error.response.status === 401) {
-            localStorage.removeItem('token');
-            return {success: true, reason:"unauthorized", data:{count:-401}};
+            if (error.response.config.url === '/api/login') {
+                return error.response.data;
+            } else {
+                localStorage.removeItem('token');
+                return {success: true, reason:"unauthorized", data:{count:-401}};    
+            }
         }
         if (error.response && error.response.status !== 401) {
             return error.response.data;

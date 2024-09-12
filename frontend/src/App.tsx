@@ -14,13 +14,11 @@ const App = () => {
     const [sCountUsers, setCountUsers] = useState<number>(0);
     const [sToken, setToken] = useState<string | null>(localStorage.getItem('token'));
 
-    const initApp = async () => {
-        const rsp = await countUsers();
-        rsp && rsp?.data && setCountUsers(rsp.data.count);
-    };
     useEffect(() => {
-        initApp();
-    }, [sToken]);
+        countUsers().then((rsp: any) => {
+            rsp && rsp?.data && setCountUsers(rsp.data.count);
+        });
+    });
 
     if (sCountUsers === 0) {
         return (
@@ -28,10 +26,14 @@ const App = () => {
                 <Setup></Setup>
             </div>
         );
-    } else if (sToken === null || sToken === '') {
+    } else if (sCountUsers < 0 || sToken === null || sToken === '') {
         return (
             <div className='App'>
-                <LoginForm callback={(tok: string) => { setToken(tok) }}></LoginForm>
+                <LoginForm callback={(tok: string) => {
+                    localStorage.setItem('token', tok);
+                    setToken(tok);
+                    document.location.reload();
+                }}></LoginForm>
             </div>
         )
     } else {

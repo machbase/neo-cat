@@ -6,36 +6,27 @@ import { loginUser } from './api/api.ts';
 
 
 export function LoginForm({ callback }: { callback: (token: string) => void }) {
-    const handleLogin = async () => {
-        const username = (document.getElementById('username') as SlInputElement).value;
-        const password = (document.getElementById('password') as SlInputElement).value;
-        const loginError = document.getElementById('login-error')
-
-        const rspLogin: any = await loginUser(username, password);
-        if (rspLogin.success) {
-            loginError.textContent = '';
-            loginError.hidden = true;
-            if (rspLogin.success) {
-                localStorage.setItem('token', rspLogin.data.token);
-                callback(rspLogin.data.token);
-            } else {
-                loginError.textContent = rspLogin.reason;
-                loginError.hidden = false;
-            }
-        } else {
-            loginError.textContent = rspLogin.reason;
-            loginError.hidden = false;
-        }
-    }
     useEffect(() => {
         const form = document.getElementById('login-form');
         form.addEventListener('submit', (event) => {
             event.preventDefault();
-            handleLogin();
+            const username = (document.getElementById('username') as SlInputElement).value;
+            const password = (document.getElementById('password') as SlInputElement).value;
+            const loginError = document.getElementById('login-error')
+            loginUser(username, password).then((rspLogin: any) => {
+                if (rspLogin.success && rspLogin.data.token !== '') {
+                    loginError.innerText = '';
+                    loginError.hidden = true;
+                   callback(rspLogin.data.token);
+                } else {
+                    loginError.innerText = rspLogin.reason;
+                    loginError.hidden = false;
+                }
+            });
         });
     });
     return (
-        <div style={{borderRadius: "10px", maxWidth:'300px', border:'2px solid var(--sl-color-primary-500)', padding:'40px', position:'absolute', top:'30%', left:'50%', transform:'translate(-50%, -50%)'}}>
+        <div style={{ borderRadius: "10px", maxWidth: '300px', border: '2px solid var(--sl-color-primary-500)', padding: '40px', position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%, -50%)' }}>
             <form id='login-form' >
                 <SlInput
                     id='username'
@@ -48,7 +39,7 @@ export function LoginForm({ callback }: { callback: (token: string) => void }) {
                     label='Password'
                     type="password"
                     password-toggle />
-                <div id="login-error" style={{ color: 'red' }} hidden></div>
+                <div id="login-error" style={{ color: 'red' }}></div>
                 <br />
                 <SlButton type="submit" variant='primary' >Login</SlButton>
             </form>
