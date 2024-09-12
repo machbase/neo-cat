@@ -61,9 +61,9 @@ export function DiskIO({ gds, disk }: { gds: GraphDataSource, disk: string }) {
                     v = null;
                 } else {
                     if (idx in [0, 1]) {
-                        v = ((v * 1000 / period) / (1024 * 1024)).toFixed(2) // ms to sec, MB/s
+                        v = ((v * 1000 / period) / (1024 * 1024)).toFixed(3) // ms to sec, MB/s
                     } else {
-                        v = ((v*1000) / period).toFixed(3); // io_time per sec (avg.)
+                        v = ((v * 1000) / period).toFixed(3); // io_time per sec (avg.)
                     }
                 }
             } else {
@@ -113,7 +113,7 @@ export function NicBytes({ gds, nic }: { gds: GraphDataSource, nic: string }) {
                 if (v < 0) {
                     v = null;
                 } else {
-                    v = (v*1000 / (1024 * 1024 * dur)).toFixed(2);
+                    v = (v * 1000 / (1024 * 1024 * dur)).toFixed(3);
                 }
             } else {
                 v = null;
@@ -183,7 +183,7 @@ export function NicPackets({ gds, nic }: { gds: GraphDataSource, nic: string }) 
 export function NeoMqttIO({ gds }: { gds: GraphDataSource }) {
     const series = (idx: number, series: any, records: any[]): any => {
         let opt = { ...series }
-        if (idx in [0, 1]) {
+        if (idx === 1) {
             opt.yAxisIndex = 0;
         } else {
             opt.yAxisIndex = 1;
@@ -192,12 +192,15 @@ export function NeoMqttIO({ gds }: { gds: GraphDataSource }) {
             const ts = records[i][0];
             let v = records[i][1];
             if (i > 0) {
+                const dur = ts - records[i - 1][0];
                 v = v - records[i - 1][1];
                 if (v < 0) {
                     v = null;
                 } else {
                     if (idx in [0, 1]) {
-                        v = (v / (1024 * 1024)).toFixed(5);
+                        v = (v * 1000 / (1024*dur)).toFixed(3);
+                    } else {
+                        v = (v * 1000 / dur).toFixed(3);
                     }
                 }
             } else {
@@ -215,8 +218,8 @@ export function NeoMqttIO({ gds }: { gds: GraphDataSource }) {
             chartOptions={{
                 title: { text: 'MQTT Bytes', left: 'center' },
                 yAxis: [
-                    { type: 'value', name: 'bytes', alignTicks: true, axisLabel: { formatter: '{value} MB' } },
-                    { type: 'value', name: 'packets', alignTicks: true },
+                    { type: 'value', name: 'bytes', alignTicks: true, axisLabel: { formatter: '{value} KB/s' } },
+                    { type: 'value', name: 'pkt/s', alignTicks: true, axisLabel: { formatter: '{value} /s' } },
                 ],
             }}
             chartSeries={series}
