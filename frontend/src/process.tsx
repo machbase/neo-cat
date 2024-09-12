@@ -13,7 +13,7 @@ import SlTabPanel from '@shoelace-style/shoelace/dist/react/tab-panel';
 import type SlDrawerElement from '@shoelace-style/shoelace/dist/components/drawer/drawer';
 import type SlDropdownElement from '@shoelace-style/shoelace/dist/components/dropdown/dropdown';
 import type SlMenuItemElement from '@shoelace-style/shoelace/dist/components/menu-item/menu-item';
-import { startControl, stopControl, getConfig, getConfigIntervalSec, getConfigTableName, parseDuration, getConfigTagPrefix, getConfigNeoStatzAddr, setConfig } from './api/api.ts';
+import { startControl, stopControl, getConfig, getConfigIntervalSec, getConfigTableName, parseDuration, getConfigTagPrefix, setConfig } from './api/api.ts';
 import { Logout } from './login.tsx';
 import { SystemChart, NeoChart } from './chart.tsx';
 import { StatusButton } from './status.tsx';
@@ -37,7 +37,6 @@ export function ProcessControl() {
     const [sThemeIcon, setThemeIcon] = useState<string>('moon');
     const [configuredTableName, setConfiguredTableName] = useState<string>('');
     const [configuredTagPrefix, setConfiguredTagPrefix] = useState<string>('');
-    const [configuredNeoStatzAddr, setConfiguredNeoStatzAddr] = useState<string>('http://127.0.0.1:5654/db/statz');
     const [configuredIntervalSec, setConfiguredIntervalSec] = useState<number>(5);
     const [sInputProto, setInputProto] = useState<string[]>([]);
     const [sInputNet, setInputNet] = useState<string[]>([]);
@@ -65,7 +64,6 @@ export function ProcessControl() {
         setConfiguredIntervalSec(intervalSec);
         setConfiguredTableName(await getConfigTableName(configuredTableName));
         setConfiguredTagPrefix(await getConfigTagPrefix(configuredTagPrefix));
-        setConfiguredNeoStatzAddr(await getConfigNeoStatzAddr(configuredNeoStatzAddr));
 
         getConfig(CONF_IN_PROTO).then((rsp: any) => {
             if (rsp.success && rsp.data.in_proto) {
@@ -310,7 +308,6 @@ export function ProcessControl() {
                     tableName={configuredTableName}
                     interval={`${configuredIntervalSec}s`}
                     tagPrefix={configuredTagPrefix}
-                    neoStatzAddr={configuredNeoStatzAddr}
                 />
             </SlDrawer>
             <SlDrawer label='Vital Signs' id='inputs-drawer'>

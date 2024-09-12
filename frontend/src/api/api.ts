@@ -107,15 +107,6 @@ export const getConfigTagPrefix = async (defaultTagPrefix: string): Promise<stri
     }
 }
 
-export const getConfigNeoStatzAddr = async (defaultTagPrefix: string): Promise<string> => {
-    const rspStatzAddr: any = await getConfig('neo_statz_addr');
-    if (rspStatzAddr.success) {
-        return rspStatzAddr.data.neo_statz_addr;
-    } else {
-        return rspStatzAddr;
-    }
-}
-
 // backend: control/start
 export const startControl = async () => {
     return request({
