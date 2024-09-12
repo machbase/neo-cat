@@ -23,13 +23,19 @@ import { InputSettings } from './setupInputs.tsx';
 const PKG_RUNNING = 'running';
 const PKG_STOPPED = 'stopped';
 
+const	CONF_IN_TABLE_ROWS_COUNTER = "in_table_rows_counter"
+const	CONF_IN_PROTO              = "in_proto"
+const	CONF_IN_DISK               = "in_disk"
+const	CONF_IN_DISKIO             = "in_diskio"
+const	CONF_IN_NET                = "in_net"
+
 export function ProcessControl() {
     const [controlStatus, setControlStatus] = useState<string>('unknown');
     const [chartRangeSec, setChartRangeSec] = useState<number>(5 * 60); // charts show the last 5 minutes by default
     const [chartRefreshSec, setChartRefreshSec] = useState<number>(5);
     const [chartTheme, setChartTheme] = useState<string>('light');
     const [sThemeIcon, setThemeIcon] = useState<string>('moon');
-    const [configuredTableName, setConfiguredTableName] = useState<string>('example');
+    const [configuredTableName, setConfiguredTableName] = useState<string>('');
     const [configuredTagPrefix, setConfiguredTagPrefix] = useState<string>('');
     const [configuredNeoStatzAddr, setConfiguredNeoStatzAddr] = useState<string>('http://127.0.0.1:5654/db/statz');
     const [configuredIntervalSec, setConfiguredIntervalSec] = useState<number>(5);
@@ -61,7 +67,7 @@ export function ProcessControl() {
         setConfiguredTagPrefix(await getConfigTagPrefix(configuredTagPrefix));
         setConfiguredNeoStatzAddr(await getConfigNeoStatzAddr(configuredNeoStatzAddr));
 
-        getConfig('in_proto').then((rsp: any) => {
+        getConfig(CONF_IN_PROTO).then((rsp: any) => {
             if (rsp.success && rsp.data.in_proto) {
                 var protos = [];
                 rsp.data.in_proto.split(',').forEach((proto: string) => {
@@ -70,7 +76,7 @@ export function ProcessControl() {
                 setInputProto(protos);
             }
         }).catch((err) => { });
-        getConfig('in_net').then((rsp: any) => {
+        getConfig(CONF_IN_NET).then((rsp: any) => {
             if (rsp.success && rsp.data.in_net) {
                 var nets = [];
                 rsp.data.in_net.split(',').forEach((net: string) => {
@@ -79,7 +85,7 @@ export function ProcessControl() {
                 setInputNet(nets);
             }
         }).catch((err) => { });
-        getConfig('in_disk').then((rsp: any) => {
+        getConfig(CONF_IN_DISK).then((rsp: any) => {
             if (rsp.success && rsp.data.in_disk) {
                 var disks = [];
                 rsp.data.in_disk.split(',').forEach((disk: string) => {
@@ -88,7 +94,7 @@ export function ProcessControl() {
                 setInputDisk(disks);
             }
         }).catch((err) => { });
-        getConfig('in_diskio').then((rsp: any) => {
+        getConfig(CONF_IN_DISKIO).then((rsp: any) => {
             if (rsp.success && rsp.data.in_diskio) {
                 var diskios = [];
                 rsp.data.in_diskio.split(',').forEach((diskio: string) => {
@@ -97,7 +103,7 @@ export function ProcessControl() {
                 setInputDiskio(diskios);
             }
         }).catch((err) => { });
-        getConfig('in_table_rows_counter').then((rsp: any) => {
+        getConfig(CONF_IN_TABLE_ROWS_COUNTER).then((rsp: any) => {
             if (rsp.success && rsp.data.in_table_rows_counter) {
                 var rows = [];
                 rsp.data.in_table_rows_counter.split(',').forEach((row: string) => {

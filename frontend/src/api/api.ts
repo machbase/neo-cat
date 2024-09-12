@@ -1,11 +1,11 @@
 import request from './index';
 
 export const createTable = async (tableName: string) => {
-    const sql = `CREATE TAG TABLE IF NOT EXISTS ${tableName} (`+
-                `name varchar(200) primary key,`+
-                `time datetime basetime,`+
-                `value double summarized`+
-                `)`
+    const sql = `CREATE TAG TABLE IF NOT EXISTS ${tableName} (` +
+        `name varchar(200) primary key,` +
+        `time datetime basetime,` +
+        `value double summarized` +
+        `)`
     return request({
         method: 'GET',
         baseURL: null,
@@ -150,21 +150,6 @@ export const queryTagData = async (table: string, tag: string, durationSec: numb
         `WHERE name = '${tag}' ` +
         `AND time BETWEEN ${tick}000000-${durationSec}000000000 AND ${tick}000000 ` +
         `LIMIT 0, 1000000`;
-    // const sqlLastNSec = `
-    //         SELECT
-    //             time, value
-    //         FROM
-    //             ${table}
-    //         WHERE
-    //             name = '${tag}'
-    //         AND time BETWEEN (
-    //                 SELECT MAX_TIME-${durationSec}000000000 FROM V$${table}_STAT WHERE name = '${tag}'
-    //             )
-    //             AND (
-    //                 SELECT MAX_TIME FROM V$${table}_STAT WHERE name = '${tag}'
-    //             )
-    //         LIMIT 0, 1000000
-    // `;
     return request({
         method: 'GET',
         baseURL: ``,
@@ -178,7 +163,7 @@ export const queryTagData = async (table: string, tag: string, durationSec: numb
     });
 }
 
-export const getMachine = async(category: 'protocol'|'partition'|'diskio'|'net') => {
+export const getMachine = async (category: 'protocol' | 'partition' | 'diskio' | 'net') => {
     return request({
         method: 'GET',
         baseURL: '/web/apps/neo-cat',
@@ -186,7 +171,7 @@ export const getMachine = async(category: 'protocol'|'partition'|'diskio'|'net')
     });
 }
 
-export const getDBTables = async() => {
+export const getDBTables = async () => {
     return request({
         method: 'GET',
         baseURL: '/web/apps/neo-cat',
