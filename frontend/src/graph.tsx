@@ -183,11 +183,6 @@ export function NicPackets({ gds, nic }: { gds: GraphDataSource, nic: string }) 
 export function NeoMqttIO({ gds }: { gds: GraphDataSource }) {
     const series = (idx: number, series: any, records: any[]): any => {
         let opt = { ...series }
-        if (idx === 1) {
-            opt.yAxisIndex = 0;
-        } else {
-            opt.yAxisIndex = 1;
-        }
         for (let i = 0; i < records.length; i++) {
             const ts = records[i][0];
             let v = records[i][1];
@@ -197,11 +192,7 @@ export function NeoMqttIO({ gds }: { gds: GraphDataSource }) {
                 if (v < 0) {
                     v = null;
                 } else {
-                    if (idx in [0, 1]) {
-                        v = (v * 1000 / (1024*dur)).toFixed(3);
-                    } else {
-                        v = (v * 1000 / dur).toFixed(3);
-                    }
+                    v = (v * 1000 / (1024 * dur)).toFixed(3);
                 }
             } else {
                 v = null;
@@ -212,14 +203,13 @@ export function NeoMqttIO({ gds }: { gds: GraphDataSource }) {
     }
     return (
         <Graph
-            tags={['statz_mqtt_bytes_sent', 'statz_mqtt_bytes_recv', 'statz_mqtt_packets_sent', 'statz_mqtt_packets_recv']}
-            names={['tx', 'rx', 'pkt_tx', 'pkt_rx']}
+            tags={['statz_mqtt_bytes_sent', 'statz_mqtt_bytes_recv']}
+            names={['tx', 'rx']}
             gds={gds}
             chartOptions={{
                 title: { text: 'MQTT Bytes', left: 'center' },
                 yAxis: [
                     { type: 'value', name: 'bytes', alignTicks: true, axisLabel: { formatter: '{value} KB/s' } },
-                    { type: 'value', name: 'pkt/s', alignTicks: true, axisLabel: { formatter: '{value} /s' } },
                 ],
             }}
             chartSeries={series}
@@ -238,9 +228,7 @@ export function NeoMqttMessages({ gds }: { gds: GraphDataSource }) {
                 if (v < 0) {
                     v = null;
                 } else {
-                    if (idx in [0, 1]) {
-                        v = (v * 1000) / dur;
-                    }
+                    v = ((v * 1000) / dur).toFixed(3);
                 }
             } else {
                 v = null;
@@ -252,13 +240,13 @@ export function NeoMqttMessages({ gds }: { gds: GraphDataSource }) {
 
     return (
         <Graph
-            tags={['statz_mqtt_messages_sent', 'statz_mqtt_messages_recv']}
-            names={['msg_tx', 'msg_rx', 'clients']}
+            tags={['statz_mqtt_messages_sent', 'statz_mqtt_messages_recv', 'statz_mqtt_packets_sent', 'statz_mqtt_packets_recv']}
+            names={['msg_tx', 'msg_rx', 'pkt_tx', 'pkt_rx']}
             gds={gds}
             chartOptions={{
-                title: { text: 'MQTT Messages', left: 'center' },
+                title: { text: 'MQTT Msg & Pkt', left: 'center' },
                 yAxis: [
-                    { type: 'value', name: 'msgs/s', alignTicks: true, axisLabel: { formatter: '{value} /s' } },
+                    { type: 'value', alignTicks: true, axisLabel: { formatter: '{value} /s' } },
                 ],
             }}
             chartSeries={series}
