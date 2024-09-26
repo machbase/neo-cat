@@ -22,6 +22,21 @@ type NeoStatz struct {
 		Retained            int64 `json:"retained"`
 		Subscriptions       int64 `json:"subscriptions"`
 	} `json:"mqtt"`
+	Http struct {
+		RequestTotal  uint64 `json:"request_total"`
+		Latency1ms    uint64 `json:"latency_1ms"`
+		Latency100ms  uint64 `json:"latency_100ms"`
+		Latency1s     uint64 `json:"latency_1s"`
+		Latency5s     uint64 `json:"latency_5s"`
+		LatencyOver5s uint64 `json:"latency_over_5s"`
+		BytesRecv     uint64 `json:"bytes_recv"`
+		BytesSend     uint64 `json:"bytes_send"`
+		Status1xx     uint64 `json:"status_1xx"`
+		Status2xx     uint64 `json:"status_2xx"`
+		Status3xx     uint64 `json:"status_3xx"`
+		Status4xx     uint64 `json:"status_4xx"`
+		Status5xx     uint64 `json:"status_5xx"`
+	} `json:"http"`
 	Neo struct {
 		Mem struct {
 			HeapInUse    int64 `json:"heap_in_use"`
@@ -48,6 +63,19 @@ func NeoStatzInput(args []string) func() ([]*report.Record, error) {
 			return nil, fmt.Errorf("inlet_neo_statz %s", err)
 		}
 		ret := []*report.Record{
+			{Name: "statz_http_request_total", Value: float64(o.Http.RequestTotal), Precision: 0},
+			{Name: "statz_http_latency_1ms", Value: float64(o.Http.Latency1ms), Precision: 0},
+			{Name: "statz_http_latency_100ms", Value: float64(o.Http.Latency100ms), Precision: 0},
+			{Name: "statz_http_latency_1s", Value: float64(o.Http.Latency1s), Precision: 0},
+			{Name: "statz_http_latency_5s", Value: float64(o.Http.Latency5s), Precision: 0},
+			{Name: "statz_http_latency_over_5s", Value: float64(o.Http.LatencyOver5s), Precision: 0},
+			{Name: "statz_http_bytes_recv", Value: float64(o.Http.BytesRecv), Precision: 0},
+			{Name: "statz_http_bytes_send", Value: float64(o.Http.BytesSend), Precision: 0},
+			{Name: "statz_http_status_1xx", Value: float64(o.Http.Status1xx), Precision: 0},
+			{Name: "statz_http_status_2xx", Value: float64(o.Http.Status2xx), Precision: 0},
+			{Name: "statz_http_status_3xx", Value: float64(o.Http.Status3xx), Precision: 0},
+			{Name: "statz_http_status_4xx", Value: float64(o.Http.Status4xx), Precision: 0},
+			{Name: "statz_http_status_5xx", Value: float64(o.Http.Status5xx), Precision: 0},
 			{Name: "statz_mqtt_bytes_recv", Value: float64(o.Mqtt.BytesRecv), Precision: 0},
 			{Name: "statz_mqtt_bytes_sent", Value: float64(o.Mqtt.BytesSent), Precision: 0},
 			{Name: "statz_mqtt_clients_connected", Value: float64(o.Mqtt.ClientsConnected), Precision: 0},

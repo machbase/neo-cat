@@ -367,6 +367,133 @@ export function ProtoIcmpCount({ gds }: { gds: GraphDataSource }) {
         />);
 }
 
+export function NeoHttpReq({ gds }: { gds: GraphDataSource }) {
+    const series = (idx: number, series: any, records: any[]): any => {
+        let opt = { ...series }
+        if (idx in [0, 1]) {
+            opt.type = 'line';
+            opt.yAxisIndex = 0;
+        } else {
+            opt.yAxisIndex = 1;
+        }
+        for (let i = 0; i < records.length; i++) {
+            const ts = records[i][0];
+            let v = records[i][1];
+            if (i > 0) {
+                const dur = ts - records[i - 1][0];
+                v = v - records[i - 1][1];
+                if (v < 0) {
+                    v = null;
+                } else {
+                    if (idx in [0, 1]) {
+                        v = (v / dur).toFixed(3); // kb/s
+                    } else {
+                        v = (v * 1000 / dur).toFixed(3); // req/s
+                    }
+                }
+            } else {
+                v = null;
+            }
+            opt.data.push({ name: ts, value: [ts, v], symbol: 'none' });
+        }
+        return opt
+    }
+
+    // [x] statz_http_bytes_recv
+    // [x] statz_http_bytes_send
+    // [x] statz_http_request_total
+    return (
+        <Graph
+            tags={['statz_http_bytes_send', 'statz_http_bytes_recv', 'statz_http_request_total']}
+            names={['rsp_bytes', 'req_bytes', 'req_total']}
+            gds={gds}
+            chartOptions={{
+                title: { text: 'HTTP Contents & Requests', left: 'center' },
+                yAxis: [
+                    { type: 'value', name: 'bytes', alignTicks: true, axisLabel: { formatter: '{value} KB/s' } },
+                    { type: 'value', name: 'req', alignTicks: true, axisLabel: { formatter: '{value} /s' } },
+                ],
+            }}
+            chartSeries={series}
+        />);
+}
+
+export function NeoHttpLatency({ gds }: { gds: GraphDataSource }) {
+    const series = (idx: number, series: any, records: any[]): any => {
+        let opt = { ...series }
+        opt.type = 'line';
+        for (let i = 0; i < records.length; i++) {
+            const ts = records[i][0];
+            let v = records[i][1];
+            if (i > 0) {
+                v = v - records[i - 1][1];
+                if (v < 0) {
+                    v = null;
+                }
+            } else {
+                v = null;
+            }
+            opt.data.push({ name: ts, value: [ts, v], symbol: 'none' });
+        }
+        return opt
+    }
+
+    // [x] statz_http_latency_1ms
+    // [x] statz_http_latency_100ms
+    // [x] statz_http_latency_1s
+    // [x] statz_http_latency_5s
+    // [x] statz_http_latency_over_5s
+    return (
+        <Graph
+            tags={['statz_http_latency_1ms', 'statz_http_latency_100ms', 'statz_http_latency_1s', 'statz_http_latency_5s', 'statz_http_latency_over_5s']}
+            names={['< 1ms', '< 100ms', '< 1s', '< 5s', '> 5s']}
+            gds={gds}
+            chartOptions={{
+                title: { text: 'HTTP Latency', left: 'center' },
+                yAxis: [
+                    { type: 'value' },
+                ],
+            }}
+            chartSeries={series}
+        />);
+}
+
+export function NeoHttpStatus({ gds }: { gds: GraphDataSource }) {
+    const series = (idx: number, series: any, records: any[]): any => {
+        let opt = { ...series }
+        opt.type = 'bar';
+        opt.stack = 'x';
+        for (let i = 0; i < records.length; i++) {
+            const ts = records[i][0];
+            let v = records[i][1];
+            if (i > 0) {
+                v = v - records[i - 1][1];
+                if (v < 0) {
+                    v = null;
+                }
+            } else {
+                v = null;
+            }
+            opt.data.push({ name: ts, value: [ts, v], symbol: 'none' });
+        }
+        return opt
+    }
+
+    return (
+        <Graph
+            tags={['statz_http_status_1xx', 'statz_http_status_2xx', 'statz_http_status_3xx', 'statz_http_status_4xx', 'statz_http_status_5xx']}
+            names={['1xx', '2xx', '3xx', '4xx', '5xx']}
+            gds={gds}
+            chartOptions={{
+                title: { text: 'HTTP Status', left: 'center' },
+                yAxis: [
+                    { type: 'value' },
+                ],
+            }}
+            chartSeries={series}
+        />);
+}
+
 export function NeoMqttIO({ gds }: { gds: GraphDataSource }) {
     const series = (idx: number, series: any, records: any[]): any => {
         let opt = { ...series }

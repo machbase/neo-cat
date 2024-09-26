@@ -69,6 +69,11 @@ export function NeoChart(c: {
     const gds: graph.GraphDataSource = { tableName: c.tableName, tagPrefix: c.tagPrefix, rangeSec: c.rangeSec, refreshIntervalSec: c.refreshIntervalSec, theme: c.theme }
 
     const cells = [];
+    
+    cells.push(<graph.NeoHttpReq key='http_req' gds={gds} />);
+    cells.push(<graph.NeoHttpLatency key='http_latency' gds={gds} />);
+    cells.push(<graph.NeoHttpStatus key='http_status' gds={gds} />);
+
     cells.push(<graph.NeoMqttIO key='mqtt_io' gds={gds} />);
     cells.push(<graph.NeoMqttMessages key='mqtt_msg' gds={gds} />);
     cells.push(<graph.NeoMqttClients key='mqtt_clients' gds={gds} />);
