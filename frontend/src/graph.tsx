@@ -180,6 +180,193 @@ export function NicPackets({ gds, nic }: { gds: GraphDataSource, nic: string }) 
         />);
 }
 
+export function ProtoTcpCount({ gds }: { gds: GraphDataSource }) {
+    const series = (idx: number, series: any, records: any[]): any => {
+        let opt = { ...series }
+        if (idx in [0, 1]) {
+            opt.type = 'line';
+            opt.yAxisIndex = 0;
+        } else {
+            opt.yAxisIndex = 1;
+        }
+        for (let i = 0; i < records.length; i++) {
+            const ts = records[i][0];
+            let v = records[i][1];
+            if (idx in [0, 1]) {
+                if (i > 0) {
+                    const dur = ts - records[i - 1][0];
+                    v = v - records[i - 1][1];
+                    if (v < 0) {
+                        v = null;
+                    } else {
+                        if (idx in [0, 1]) {
+                            v = ((v * 1000) / dur).toFixed(2);
+                        }
+                    }
+                } else {
+                    v = null;
+                }
+            }
+            opt.data.push({ name: ts, value: [ts, v], symbol: 'none' });
+        }
+        return opt
+    }
+    // [x] proto.tcp.ActiveOpens   
+    // [ ] proto.tcp.AttemptFails  
+    // [x] proto.tcp.CurrEstab     
+    // [ ] proto.tcp.EstabResets   
+    // [ ] proto.tcp.InCsumErrors  
+    // [ ] proto.tcp.InErrs        
+    // [ ] proto.tcp.InSegs        
+    // [ ] proto.tcp.MaxConn       
+    // [ ] proto.tcp.OutRsts       
+    // [ ] proto.tcp.OutSegs       
+    // [x] proto.tcp.PassiveOpens  
+    // [ ] proto.tcp.RetransSegs   
+    // [ ] proto.tcp.RtoAlgorithm  
+    // [ ] proto.tcp.RtoMax        
+    // [ ] proto.tcp.RtoMin        
+    return (
+        <Graph
+            tags={[`proto.tcp.ActiveOpens`, `proto.tcp.PassiveOpens`, `proto.tcp.CurrEstab`]}
+            names={['active_opens', 'passive_opens', 'established']}
+            gds={gds}
+            chartOptions={{
+                title: { text: `Net - tcp`, left: 'center' },
+                yAxis: [
+                    { type: 'value', name: 'open', alignTicks: true, axisLabel: { formatter: '{value} /s' } },
+                    { type: 'value', name: 'estab', alignTicks: true },
+                ],
+            }}
+            chartSeries={series}
+        />);
+}
+
+export function ProtoUdpCount({ gds }: { gds: GraphDataSource }) {
+    const series = (idx: number, series: any, records: any[]): any => {
+        let opt = { ...series }
+        if (idx in [0, 1]) {
+            opt.type = 'line';
+            opt.yAxisIndex = 0;
+        } else {
+            opt.yAxisIndex = 1;
+        }
+        for (let i = 0; i < records.length; i++) {
+            const ts = records[i][0];
+            let v = records[i][1];
+            if (idx in [0, 1]) {
+                if (i > 0) {
+                    const dur = ts - records[i - 1][0];
+                    v = v - records[i - 1][1];
+                    if (v < 0) {
+                        v = null;
+                    } else {
+                        if (idx in [0, 1]) {
+                            v = ((v * 1000) / dur).toFixed(2);
+                        }
+                    }
+                } else {
+                    v = null;
+                }
+            }
+            opt.data.push({ name: ts, value: [ts, v], symbol: 'none' });
+        }
+        return opt
+    }
+    // [ ] proto.udp.IgnoredMulti  
+    // [ ] proto.udp.InCsumErrors  
+    // [x] proto.udp.InDatagrams   
+    // [x] proto.udp.InErrors      
+    // [ ] proto.udp.MemErrors     
+    // [ ] proto.udp.NoPorts       
+    // [x] proto.udp.OutDatagrams  
+    // [ ] proto.udp.RcvbufErrors  
+    // [ ] proto.udp.SndbufErrors  
+    return (
+        <Graph
+            tags={[`proto.udp.OutDatagrams`, `proto.udp.InDatagrams`, `proto.udp.InErrors`]}
+            names={['tx_dgram', 'rx_dgram', 'errors']}
+            gds={gds}
+            chartOptions={{
+                title: { text: `Net - udp`, left: 'center' },
+                yAxis: [
+                    { type: 'value', name: 'tx/rx', alignTicks: true, axisLabel: { formatter: '{value} /s' } },
+                    { type: 'value', name: 'errros', alignTicks: true },
+                ],
+            }}
+            chartSeries={series}
+        />);
+}
+
+export function ProtoIcmpCount({ gds }: { gds: GraphDataSource }) {
+    const series = (idx: number, series: any, records: any[]): any => {
+        let opt = { ...series }
+        if (idx in [0, 1]) {
+            opt.type = 'line';
+            opt.yAxisIndex = 0;
+        } else {
+            opt.yAxisIndex = 1;
+        }
+        for (let i = 0; i < records.length; i++) {
+            const ts = records[i][0];
+            let v = records[i][1];
+            if (i > 0) {
+                v = v - records[i - 1][1];
+                if (v < 0) {
+                    v = null;
+                }
+            } else {
+                v = null;
+            }
+            opt.data.push({ name: ts, value: [ts, v], symbol: 'none' });
+        }
+        return opt
+    }
+    // [ ] proto.icmp.InAddrMaskReps    
+    // [ ] proto.icmp.InAddrMasks       
+    // [ ] proto.icmp.InCsumErrors      
+    // [ ] proto.icmp.InDestUnreachs    
+    // [ ] proto.icmp.InEchoReps        
+    // [ ] proto.icmp.InEchos           
+    // [x] proto.icmp.InErrors          
+    // [x] proto.icmp.InMsgs            
+    // [ ] proto.icmp.InParmProbs       
+    // [ ] proto.icmp.InRedirects       
+    // [ ] proto.icmp.InSrcQuenchs      
+    // [ ] proto.icmp.InTimeExcds       
+    // [ ] proto.icmp.InTimestampReps   
+    // [ ] proto.icmp.InTimestamps      
+    // [ ] proto.icmp.OutAddrMaskReps   
+    // [ ] proto.icmp.OutAddrMasks      
+    // [ ] proto.icmp.OutDestUnreachs   
+    // [ ] proto.icmp.OutEchoReps       
+    // [ ] proto.icmp.OutEchos          
+    // [x] proto.icmp.OutErrors         
+    // [x] proto.icmp.OutMsgs           
+    // [ ] proto.icmp.OutParmProbs      
+    // [ ] proto.icmp.OutRateLimitGlobal
+    // [ ] proto.icmp.OutRateLimitHost  
+    // [ ] proto.icmp.OutRedirects      
+    // [ ] proto.icmp.OutSrcQuenchs     
+    // [ ] proto.icmp.OutTimeExcds      
+    // [ ] proto.icmp.OutTimestampReps  
+    // [ ] proto.icmp.OutTimestamps     
+    return (
+        <Graph
+            tags={['proto.icmp.OutMsgs', 'proto.icmp.InMsgs', 'proto.icmp.OutErrors', 'proto.icmp.InErrors']}
+            names={['tx_msgs', 'rx_msgs', 'tx_errors', 'rx_errors']}
+            gds={gds}
+            chartOptions={{
+                title: { text: `Net - icmp`, left: 'center' },
+                yAxis: [
+                    { type: 'value', name: 'tx/rx', alignTicks: true, axisLabel: { formatter: '{value} /s' } },
+                    { type: 'value', name: 'errros', alignTicks: true },
+                ],
+            }}
+            chartSeries={series}
+        />);
+}
+
 export function NeoMqttIO({ gds }: { gds: GraphDataSource }) {
     const series = (idx: number, series: any, records: any[]): any => {
         let opt = { ...series }

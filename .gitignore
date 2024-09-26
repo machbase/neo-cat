@@ -30,3 +30,5 @@ neo-cat-package.tgz
 sock
 data.db
 pid.txt
+
+frontend/package-lock.json

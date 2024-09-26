@@ -22,9 +22,18 @@ export function SystemChart(c: {
         cells.push(<graph.NicPackets key={`nic_packets_${nic}`} gds={gds} nic={nic} />);
     }
     for (let i = 0; c.inProto && i < c.inProto.length; i++) {
-        //const proto = c.inProto[i];
-        //const count = `proto.${proto}.count`;
-        // TODO: implement proto chart
+        const proto = c.inProto[i];
+        switch (proto) {
+            case 'tcp':
+                cells.push(<graph.ProtoTcpCount key={`${proto}_count`} gds={gds} />);
+                break;
+            case 'udp':
+                cells.push(<graph.ProtoUdpCount key={`${proto}_count`} gds={gds} />);
+                break;
+            case 'icmp':
+                cells.push(<graph.ProtoIcmpCount key={`${proto}_count`} gds={gds} />);
+                break;
+        }
     }
     for (let i = 0; c.inDisks && i < c.inDisks.length; i++) {
         const disk = c.inDisks[i];

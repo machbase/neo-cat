@@ -18,7 +18,7 @@ import (
 *
 * Run backend for development:
 *
-*	MACHBASE_NEO_HTTP="unix:///tmp/machbase-neo-unix.sock" \
+*	MACHBASE_NEO_HTTP="unix:///tmp/machbase-neo.sock" \
 *	go run . --pid ./pid.txt --listen "tcp://127.0.0.1:12345" --debug
 *
 * Run frontend for development: (packages.json has proxy setting for the http://127.0.0.1:12345)
@@ -70,7 +70,12 @@ func Run() int {
 		WithDatabase(*optDatabase),
 		WithNeoHttpAddress(neoHttpAddr),
 	)
-	go svr.Start()
+	go func() {
+		if err := svr.Start(); err != nil {
+			// when failed to start the server
+			os.Exit(1)
+		}
+	}()
 
 	// wait Ctrl+C
 	done := make(chan os.Signal, 1)
