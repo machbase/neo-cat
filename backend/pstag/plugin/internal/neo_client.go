@@ -79,12 +79,11 @@ func (c *NeoHttpClient) GetStatz() (*NeoStatz, error) {
 	// neoHttpClient.Lock()
 	// defer neoHttpClient.Unlock()
 
-	path, _ := url.JoinPath(c.host, "/db/statz")
+	path, _ := url.JoinPath(c.host, "/debug/statz")
 	rsp, err := c.Client.Get(path)
 	if err != nil {
 		return nil, fmt.Errorf("statz %s", err)
 	}
-
 	defer rsp.Body.Close()
 	o := &NeoStatz{}
 	if err := json.NewDecoder(rsp.Body).Decode(o); err != nil {

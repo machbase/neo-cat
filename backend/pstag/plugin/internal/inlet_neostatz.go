@@ -6,52 +6,34 @@ import (
 )
 
 type NeoStatz struct {
-	Mqtt struct {
-		BytesRecv           int64 `json:"bytes_received"`
-		BytesSent           int64 `json:"bytes_sent"`
-		ClientsConnected    int64 `json:"clients_connected"`
-		ClientsDisconnected int64 `json:"clients_disconnected"`
-		ClientsMax          int64 `json:"clients_max"`
-		ClientsTotal        int64 `json:"clients_total"`
-		Inflight            int64 `json:"inflight"`
-		InflightDropped     int64 `json:"inflight_dropped"`
-		MessagesRecv        int64 `json:"messages_received"`
-		MessagesSent        int64 `json:"messages_sent"`
-		PacketsRecv         int64 `json:"packets_received"`
-		PacketsSent         int64 `json:"packets_sent"`
-		Retained            int64 `json:"retained"`
-		Subscriptions       int64 `json:"subscriptions"`
-	} `json:"mqtt"`
-	Http struct {
-		RequestTotal  uint64 `json:"request_total"`
-		Latency1ms    uint64 `json:"latency_1ms"`
-		Latency100ms  uint64 `json:"latency_100ms"`
-		Latency1s     uint64 `json:"latency_1s"`
-		Latency5s     uint64 `json:"latency_5s"`
-		LatencyOver5s uint64 `json:"latency_over_5s"`
-		BytesRecv     uint64 `json:"bytes_recv"`
-		BytesSend     uint64 `json:"bytes_send"`
-		Status1xx     uint64 `json:"status_1xx"`
-		Status2xx     uint64 `json:"status_2xx"`
-		Status3xx     uint64 `json:"status_3xx"`
-		Status4xx     uint64 `json:"status_4xx"`
-		Status5xx     uint64 `json:"status_5xx"`
-	} `json:"http"`
-	Neo struct {
-		Mem struct {
-			HeapInUse    int64 `json:"heap_in_use"`
-			GCPauseNanos int64 `json:"gc_pause_total_ns"`
-		} `json:"mem"`
-	} `json:"neo"`
-	Sess struct {
-		Appenders     int64 `json:"appenders"`
-		AppendersUsed int64 `json:"appenders_used"`
-		Conns         int64 `json:"conns"`
-		ConnsUsed     int64 `json:"conns_used"`
-		RawConns      int64 `json:"raw_conns"`
-		Stmts         int64 `json:"stmts"`
-		StmtsUsed     int64 `json:"stmts_used"`
-	} `json:"sess"`
+	MqttBytesRecv           int64  `json:"machbase:mqtt:recv_bytes"`
+	MqttBytesSent           int64  `json:"machbase:mqtt:send_bytes"`
+	MqttClientsConnected    int64  `json:"machbase:mqtt:clients_connected"`
+	MqttClientsDisconnected int64  `json:"machbase:mqtt:clients_disconnected"`
+	MqttClients             int64  `json:"machbase:mqtt:clients"`
+	MqttInflight            int64  `json:"machbase:mqtt:inflight"`
+	MqttInflightDropped     int64  `json:"machbase:mqtt:inflight_dropped"`
+	MqttMessagesRecv        int64  `json:"machbase:mqtt:recv_msgs"`
+	MqttMessagesSent        int64  `json:"machbase:mqtt:send_msgs"`
+	MqttPacketsRecv         int64  `json:"machbase:mqtt:recv_pkts"`
+	MqttPacketsSent         int64  `json:"machbase:mqtt:send_pkts"`
+	MqttRetained            int64  `json:"machbase:mqtt:retained"`
+	MqttSubscriptions       int64  `json:"machbase:mqtt:subscriptions"`
+	HttpRequestTotal        uint64 `json:"machbase:http:count"`
+	HttpBytesRecv           uint64 `json:"machbase:http:recv_bytes"`
+	HttpBytesSend           uint64 `json:"machbase:http:send_bytes"`
+	HttpStatus1xx           uint64 `json:"machbase:http:status_1xx"`
+	HttpStatus2xx           uint64 `json:"machbase:http:status_2xx"`
+	HttpStatus3xx           uint64 `json:"machbase:http:status_3xx"`
+	HttpStatus4xx           uint64 `json:"machbase:http:status_4xx"`
+	HttpStatus5xx           uint64 `json:"machbase:http:status_5xx"`
+	GoHeapInUse             int64  `json:"go:heap_inuse_max"`
+	SessionAppenders        int64  `json:"machbase:session:append:count"`
+	SessionAppendersInUse   int64  `json:"machbase:session:append:in_use"`
+	SessionConns            int64  `json:"machbase:session:conn:count"`
+	SessionConnsInUse       int64  `json:"machbase:session:conn:in_use"`
+	SessionStmts            int64  `json:"machbase:session:stmt:count"`
+	SessionStmtsInUse       int64  `json:"machbase:session:stmt:in_use"`
 }
 
 func NeoStatzInput(args []string) func() ([]*report.Record, error) {
@@ -63,42 +45,34 @@ func NeoStatzInput(args []string) func() ([]*report.Record, error) {
 			return nil, fmt.Errorf("inlet_neo_statz %s", err)
 		}
 		ret := []*report.Record{
-			{Name: "statz_http_request_total", Value: float64(o.Http.RequestTotal), Precision: 0},
-			{Name: "statz_http_latency_1ms", Value: float64(o.Http.Latency1ms), Precision: 0},
-			{Name: "statz_http_latency_100ms", Value: float64(o.Http.Latency100ms), Precision: 0},
-			{Name: "statz_http_latency_1s", Value: float64(o.Http.Latency1s), Precision: 0},
-			{Name: "statz_http_latency_5s", Value: float64(o.Http.Latency5s), Precision: 0},
-			{Name: "statz_http_latency_over_5s", Value: float64(o.Http.LatencyOver5s), Precision: 0},
-			{Name: "statz_http_bytes_recv", Value: float64(o.Http.BytesRecv), Precision: 0},
-			{Name: "statz_http_bytes_send", Value: float64(o.Http.BytesSend), Precision: 0},
-			{Name: "statz_http_status_1xx", Value: float64(o.Http.Status1xx), Precision: 0},
-			{Name: "statz_http_status_2xx", Value: float64(o.Http.Status2xx), Precision: 0},
-			{Name: "statz_http_status_3xx", Value: float64(o.Http.Status3xx), Precision: 0},
-			{Name: "statz_http_status_4xx", Value: float64(o.Http.Status4xx), Precision: 0},
-			{Name: "statz_http_status_5xx", Value: float64(o.Http.Status5xx), Precision: 0},
-			{Name: "statz_mqtt_bytes_recv", Value: float64(o.Mqtt.BytesRecv), Precision: 0},
-			{Name: "statz_mqtt_bytes_sent", Value: float64(o.Mqtt.BytesSent), Precision: 0},
-			{Name: "statz_mqtt_clients_connected", Value: float64(o.Mqtt.ClientsConnected), Precision: 0},
-			{Name: "statz_mqtt_clients_disconnected", Value: float64(o.Mqtt.ClientsDisconnected), Precision: 0},
-			{Name: "statz_mqtt_clients_max", Value: float64(o.Mqtt.ClientsMax), Precision: 0},
-			{Name: "statz_mqtt_clients_total", Value: float64(o.Mqtt.ClientsTotal), Precision: 0},
-			{Name: "statz_mqtt_inflight", Value: float64(o.Mqtt.Inflight), Precision: 0},
-			{Name: "statz_mqtt_inflight_dropped", Value: float64(o.Mqtt.InflightDropped), Precision: 0},
-			{Name: "statz_mqtt_messages_recv", Value: float64(o.Mqtt.MessagesRecv), Precision: 0},
-			{Name: "statz_mqtt_messages_sent", Value: float64(o.Mqtt.MessagesSent), Precision: 0},
-			{Name: "statz_mqtt_packets_recv", Value: float64(o.Mqtt.PacketsRecv), Precision: 0},
-			{Name: "statz_mqtt_packets_sent", Value: float64(o.Mqtt.PacketsSent), Precision: 0},
-			{Name: "statz_mqtt_retained", Value: float64(o.Mqtt.Retained), Precision: 0},
-			{Name: "statz_mqtt_subscriptions", Value: float64(o.Mqtt.Subscriptions), Precision: 0},
-			{Name: "statz_mem_heap_in_use", Value: float64(o.Neo.Mem.HeapInUse), Precision: 0},
-			{Name: "statz_mem_gc_pause_ns", Value: float64(o.Neo.Mem.GCPauseNanos), Precision: 0},
-			{Name: "statz_sess_appenders", Value: float64(o.Sess.Appenders), Precision: 0},
-			{Name: "statz_sess_appenders_used", Value: float64(o.Sess.AppendersUsed), Precision: 0},
-			{Name: "statz_sess_conns", Value: float64(o.Sess.Conns), Precision: 0},
-			{Name: "statz_sess_conns_used", Value: float64(o.Sess.ConnsUsed), Precision: 0},
-			{Name: "statz_sess_raw_conns", Value: float64(o.Sess.RawConns), Precision: 0},
-			{Name: "statz_sess_stmts", Value: float64(o.Sess.Stmts), Precision: 0},
-			{Name: "statz_sess_stmts_used", Value: float64(o.Sess.StmtsUsed), Precision: 0},
+			{Name: "statz_http_request_total", Value: float64(o.HttpRequestTotal), Precision: 0},
+			{Name: "statz_http_bytes_recv", Value: float64(o.HttpBytesRecv), Precision: 0},
+			{Name: "statz_http_bytes_send", Value: float64(o.HttpBytesSend), Precision: 0},
+			{Name: "statz_http_status_1xx", Value: float64(o.HttpStatus1xx), Precision: 0},
+			{Name: "statz_http_status_2xx", Value: float64(o.HttpStatus2xx), Precision: 0},
+			{Name: "statz_http_status_3xx", Value: float64(o.HttpStatus3xx), Precision: 0},
+			{Name: "statz_http_status_4xx", Value: float64(o.HttpStatus4xx), Precision: 0},
+			{Name: "statz_http_status_5xx", Value: float64(o.HttpStatus5xx), Precision: 0},
+			{Name: "statz_mqtt_bytes_recv", Value: float64(o.MqttBytesRecv), Precision: 0},
+			{Name: "statz_mqtt_bytes_sent", Value: float64(o.MqttBytesSent), Precision: 0},
+			{Name: "statz_mqtt_clients_connected", Value: float64(o.MqttClientsConnected), Precision: 0},
+			{Name: "statz_mqtt_clients_disconnected", Value: float64(o.MqttClientsDisconnected), Precision: 0},
+			{Name: "statz_mqtt_clients", Value: float64(o.MqttClients), Precision: 0},
+			{Name: "statz_mqtt_inflight", Value: float64(o.MqttInflight), Precision: 0},
+			{Name: "statz_mqtt_inflight_dropped", Value: float64(o.MqttInflightDropped), Precision: 0},
+			{Name: "statz_mqtt_messages_recv", Value: float64(o.MqttMessagesRecv), Precision: 0},
+			{Name: "statz_mqtt_messages_sent", Value: float64(o.MqttMessagesSent), Precision: 0},
+			{Name: "statz_mqtt_packets_recv", Value: float64(o.MqttPacketsRecv), Precision: 0},
+			{Name: "statz_mqtt_packets_sent", Value: float64(o.MqttPacketsSent), Precision: 0},
+			{Name: "statz_mqtt_retained", Value: float64(o.MqttRetained), Precision: 0},
+			{Name: "statz_mqtt_subscriptions", Value: float64(o.MqttSubscriptions), Precision: 0},
+			{Name: "statz_mem_heap_in_use", Value: float64(o.GoHeapInUse), Precision: 0},
+			{Name: "statz_sess_appenders", Value: float64(o.SessionAppenders), Precision: 0},
+			{Name: "statz_sess_appenders_inuse", Value: float64(o.SessionAppendersInUse), Precision: 0},
+			{Name: "statz_sess_conns", Value: float64(o.SessionConns), Precision: 0},
+			{Name: "statz_sess_conns_inuse", Value: float64(o.SessionConnsInUse), Precision: 0},
+			{Name: "statz_sess_stmts", Value: float64(o.SessionStmts), Precision: 0},
+			{Name: "statz_sess_stmts_inuse", Value: float64(o.SessionStmtsInUse), Precision: 0},
 		}
 		return ret, nil
 	}

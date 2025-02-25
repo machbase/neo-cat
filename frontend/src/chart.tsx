@@ -90,9 +90,9 @@ export function NeoChart(c: {
         cells.push(<graph.NeoTableRowsCount key={'table_rows_counters_' + i} gds={gds} tableName={table_rows_names[i]} />);
     }
     cells.push(<graph.NeoDBConnsInflight key='db_conns' gds={gds} />);
-    cells.push(<graph.NeoDBConnsUsed key='db_conns_used' gds={gds} />);
+    // cells.push(<graph.NeoDBConnsUsed key='db_conns_used' gds={gds} />);
     cells.push(<graph.NeoDBStmtInflight key='db_stmts' gds={gds} />);
-    cells.push(<graph.NeoDBStmtUsed key='db_stmts_used' gds={gds} />);
+    // cells.push(<graph.NeoDBStmtUsed key='db_stmts_used' gds={gds} />);
     cells.push(<graph.NeoHeapGC key='neo_heap_gc' gds={gds} />);
 
     return (
